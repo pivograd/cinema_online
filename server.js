@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { pipeline } = require('stream');
 const { WebSocketServer } = require('ws');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -76,13 +77,29 @@ function readUser(req) {
 }
 
 // --- защита от перебора пароля: 5 попыток за 5 минут с одного IP ---
+// Попытка засчитывается до проверки пароля: иначе пачка параллельных запросов, придержавших тело формы,
+// прошла бы проверку лимита разом. Удачный вход свою попытку возвращает.
+const ATTEMPT_WINDOW_MS = 5 * 60 * 1000;
 const attempts = new Map();
-function tooManyAttempts(ip) {
+const recentAttempts = (ip, now) => (attempts.get(ip) || []).filter((t) => now - t < ATTEMPT_WINDOW_MS);
+function takeAttempt(ip) {
   const now = Date.now();
-  const list = (attempts.get(ip) || []).filter((t) => now - t < 5 * 60 * 1000);
+  const list = recentAttempts(ip, now);
   attempts.set(ip, list);
-  return list.length >= 5;
+  if (list.length >= 5) return null;
+  list.push(now);
+  return now;
 }
+function returnAttempt(ip, stamp) {
+  const list = attempts.get(ip);
+  const i = list ? list.indexOf(stamp) : -1;
+  if (i !== -1) list.splice(i, 1);
+  if (list && !list.length) attempts.delete(ip);
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const ip of attempts.keys()) if (!recentAttempts(ip, now).length) attempts.delete(ip);
+}, 60 * 1000).unref();
 // X-Forwarded-For может прислать кто угодно, поэтому верим ему, только если явно сказано, сколько прокси стоит
 // перед сервером (TRUST_PROXY). Каждый прокси дописывает адрес справа, так что клиент — N-й адрес с конца,
 // а всё, что левее, мог подставить сам клиент.
@@ -106,6 +123,33 @@ const snapshot = () => ({
   startsIn: room.playing ? Math.max(0, room.updatedAt - Date.now()) : 0,
   hold: room.hold,
 });
+
+// Комната переживает перезапуск сервера (выкладка новой версии, перезагрузка): состояние лежит в STATE_FILE.
+// После короткого перерыва фильм идёт дальше — плееры зрителей всё это время тоже играли; после долгого
+// встаёт на паузу там, где был. Без STATE_FILE комната живёт только в памяти.
+const STATE_FILE = process.env.STATE_FILE || '';
+const RESUME_WITHIN_MS = 60 * 1000;
+function saveRoom() {
+  if (!STATE_FILE) return;
+  const data = { file: room.file, playing: room.playing, position: currentPosition(), savedAt: Date.now() };
+  try {
+    fs.writeFileSync(STATE_FILE + '.tmp', JSON.stringify(data));
+    fs.renameSync(STATE_FILE + '.tmp', STATE_FILE);
+  } catch (err) {
+    console.warn(`Комната не сохранилась: ${err.message}`);
+  }
+}
+function loadRoom() {
+  if (!STATE_FILE) return;
+  let s;
+  try { s = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); } catch { return; }
+  if (!s || typeof s.file !== 'string' || !(s.position >= 0) || !Number.isFinite(s.savedAt)) return;
+  const away = Date.now() - s.savedAt;
+  const resume = s.playing === true && away >= 0 && away < RESUME_WITHIN_MS;
+  Object.assign(room, {
+    file: s.file, playing: resume, position: s.position + (resume ? away / 1000 : 0), updatedAt: Date.now(), hold: null,
+  });
+}
 
 function readMediaDir() {
   try {
@@ -170,7 +214,24 @@ function readBody(req, limit = 4096) {
   });
 }
 
-function serveStatic(res, file) {
+// Страницы грузят скрипты, стили и медиа только со своего сервера, без инлайн-кода, и не встраиваются в чужие
+// фреймы. WebSocket разрешаем явно на свой хост — старый Safari не считает ws/wss «своими» по 'self'.
+const HOST_RE = /^[a-z0-9.-]+(:\d+)?$/i;
+function pageHeaders(req) {
+  const host = HOST_RE.test(req.headers.host || '') ? req.headers.host : null;
+  const sockets = host ? ` wss://${host} ws://${host}` : '';
+  return {
+    'Content-Security-Policy': [
+      "default-src 'self'", "script-src 'self'", "style-src 'self'", "img-src 'self'", "media-src 'self'",
+      `connect-src 'self'${sockets}`, "font-src 'self'", "manifest-src 'self'", "object-src 'none'",
+      "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
+    ].join('; '),
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'same-origin',
+  };
+}
+
+function serveStatic(req, res, file) {
   const full = path.join(PUBLIC_DIR, file);
   if (!full.startsWith(PUBLIC_DIR + path.sep) || !fs.existsSync(full)) {
     res.writeHead(404).end('Not found');
@@ -181,8 +242,9 @@ function serveStatic(res, file) {
     'Content-Type': STATIC_TYPES[ext] || 'application/octet-stream',
     'Cache-Control': LONG_CACHE.has(ext) ? 'public, max-age=604800' : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
+    ...(ext === '.html' ? pageHeaders(req) : {}),
   });
-  fs.createReadStream(full).on('error', () => res.destroy()).pipe(res);
+  pipeline(fs.createReadStream(full), res, () => {});
 }
 
 function serveVideo(req, res, name) {
@@ -219,7 +281,9 @@ function serveVideo(req, res, name) {
   if (status === 206) headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
   res.writeHead(status, headers);
   if (req.method === 'HEAD') { res.end(); return; }
-  fs.createReadStream(full, { start, end }).on('error', () => res.destroy()).pipe(res);
+  // Зритель перемотал или закрыл вкладку — браузер обрывает ответ. pipeline тогда закрывает и файл; с .pipe()
+  // дескриптор оставался бы открытым, и удалённый или заменённый фильм занимал бы диск до перезапуска сервера.
+  pipeline(fs.createReadStream(full, { start, end }), res, () => {});
 }
 
 async function handle(req, res) {
@@ -229,8 +293,9 @@ async function handle(req, res) {
 
   if (req.method === 'POST' && pathname === '/login') {
     const ip = clientIp(req);
+    const attempt = takeAttempt(ip);
     // форма входа сама объясняет, что случилось и сколько ждать
-    if (tooManyAttempts(ip)) { res.writeHead(303, { Location: '/login?error=limit' }).end(); return; }
+    if (attempt === null) { res.writeHead(303, { Location: '/login?error=limit' }).end(); return; }
     let form;
     try { form = new URLSearchParams(await readBody(req)); } catch { res.writeHead(400).end(); return; }
     const name = form.get('user') || '';
@@ -239,10 +304,10 @@ async function handle(req, res) {
     // сравниваем всегда, чтобы время ответа не выдавало существование логина
     const ok = safeEqual(pass, expected ?? '\0') && expected !== undefined;
     if (!ok) {
-      attempts.get(ip).push(Date.now());
       res.writeHead(303, { Location: '/login?error=1' }).end();
       return;
     }
+    returnAttempt(ip, attempt);
     const secure = req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
     res.writeHead(303, {
       'Set-Cookie': `${COOKIE}=${encodeURIComponent(makeToken(name))}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_MS / 1000}${secure}`,
@@ -256,10 +321,10 @@ async function handle(req, res) {
     return;
   }
 
-  if (pathname === '/login') return serveStatic(res, 'login.html');
+  if (pathname === '/login') return serveStatic(req, res, 'login.html');
   if (pathname === '/health') { res.writeHead(200).end('ok'); return; }
   // стили, шрифты и скрипты нужны и странице входа, поэтому /assets открыт без логина (секретов там нет)
-  if (pathname.startsWith('/assets/')) return serveStatic(res, pathname.slice(1));
+  if (pathname.startsWith('/assets/')) return serveStatic(req, res, pathname.slice(1));
 
   if (!user) {
     if (pathname === '/') { res.writeHead(303, { Location: '/login' }).end(); return; }
@@ -267,7 +332,7 @@ async function handle(req, res) {
     return;
   }
 
-  if (pathname === '/') return serveStatic(res, 'index.html');
+  if (pathname === '/') return serveStatic(req, res, 'index.html');
   if (pathname === '/api/media') {
     ensureFile();
     // users — все зрители, а не только те, кто сейчас в сети: интерфейс показывает и тёмные «окна»
@@ -294,8 +359,19 @@ const server = http.createServer((req, res) => {
 
 // --- WebSocket ---
 const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+// Cookie уходит и с соседних поддоменов (для браузера это «тот же сайт»), поэтому чужая страница могла бы
+// подключиться к комнате от имени зрителя. Браузер всегда присылает Origin — пускаем только со своего хоста.
+const originHost = (origin) => {
+  try { return new URL(origin).host; } catch { return null; }
+};
 server.on('upgrade', (req, socket, head) => {
   const user = readUser(req);
+  const origin = req.headers.origin;
+  if (origin && originHost(origin) !== req.headers.host) {
+    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    socket.destroy();
+    return;
+  }
   if (!user || pathnameOf(req) !== '/ws') {
     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
     socket.destroy();
@@ -328,12 +404,22 @@ const stillBuffering = (user) => [...wss.clients].some((c) => c.user === user &&
 function publish(by, cause) {
   const out = { type: 'state', ...snapshot(), by, cause, serverTime: Date.now() };
   for (const c of wss.clients) send(c, out);
+  saveRoom();
 }
 
 // Когда все ушли, ставим комнату на паузу там, где ушёл последний, иначе фильм «досматривается» без зрителей.
 // Пауза не сразу: короткий обрыв связи у единственного зрителя не должен останавливать ему фильм.
 const EMPTY_ROOM_PAUSE_MS = 30 * 1000;
 let emptyRoomTimer = null;
+function pauseIfEmpty() {
+  if (wss.clients.size > 0 || !room.playing) return;
+  const position = currentPosition();
+  clearTimeout(emptyRoomTimer);
+  emptyRoomTimer = setTimeout(() => {
+    Object.assign(room, { playing: false, position, updatedAt: Date.now() });
+    saveRoom();
+  }, EMPTY_ROOM_PAUSE_MS);
+}
 
 // «Ждём друг друга»: кто-то догружается во время просмотра — пауза у всех; догрузился — продолжаем с того же места.
 function onBuffering(user) {
@@ -388,12 +474,7 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (room.hold === ws.user && !stillBuffering(ws.user)) room.hold = null; // ушёл, не догрузившись: остаёмся на паузе
     broadcast(presence());
-    if (wss.clients.size > 0 || !room.playing) return;
-    const position = currentPosition();
-    clearTimeout(emptyRoomTimer);
-    emptyRoomTimer = setTimeout(() => {
-      Object.assign(room, { playing: false, position, updatedAt: Date.now() });
-    }, EMPTY_ROOM_PAUSE_MS);
+    pauseIfEmpty();
   });
 });
 
@@ -406,7 +487,13 @@ setInterval(() => {
   }
   const out = { type: 'tick', ...snapshot(), serverTime: Date.now() };
   for (const c of wss.clients) send(c, out);
+  if (room.playing) saveRoom(); // время сохранения — почти момент остановки сервера, если он упадёт
 }, 4000);
+
+loadRoom();
+pauseIfEmpty(); // фильм шёл, а после перезапуска никто не вернулся — через 30 с пауза, как будто все ушли
+// docker stop и перезапуск: сохраняем комнату и выходим сразу, зрители переподключатся сами
+for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { saveRoom(); process.exit(0); });
 
 server.listen(PORT, () => {
   console.log(`Кинотеатр запущен: http://localhost:${PORT}`);

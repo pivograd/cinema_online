@@ -1,0 +1,43 @@
+# Кинозал «Свет в окне»: HTTPS → 127.0.0.1:3000. Сертификат Let's Encrypt Caddy выпускает и продлевает сам
+# (нужны A-запись домена на сервер и открытые 80/443). Ставит deploy/install.sh в /etc/caddy/sites/cinema.caddy.
+__DOMAIN__ {
+	# снаружи сюда приходит только форма входа
+	request_body {
+		max_size 64KB
+	}
+	# видео не сжимаем: оно уже сжато, а перекодирование ломает Range-запросы
+	encode {
+		gzip
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+		}
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	reverse_proxy 127.0.0.1:3000 {
+		# перезагрузка конфига Caddy (в том числе соседним проектом) не рвёт зрителям WebSocket посреди фильма
+		stream_close_delay 4h
+		# пока при выкладке новый контейнер сменяет старый, запросы ждут его, а не получают 502
+		lb_try_duration 15s
+		lb_try_interval 250ms
+	}
+	log {
+		output file /var/log/caddy/cinema-access.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+		# сессионные cookie в лог не пишем
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cookie delete
+				resp_headers>Set-Cookie delete
+			}
+		}
+	}
+}

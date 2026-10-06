@@ -1,0 +1,33 @@
+# Кинозал на сервере. Запускает deploy/install.sh; руками — из каталога релиза:
+#   docker compose -f deploy/compose.yaml up -d --build
+# Наружу смотрит только Caddy: порт открыт на 127.0.0.1, HTTPS и сертификат — на нём (deploy/cinema.caddy).
+name: cinema
+services:
+  app:
+    build: ..
+    image: cinema-online:latest
+    restart: unless-stopped
+    init: true
+    env_file: ${CINEMA_HOME:-/opt/cinema}/.env
+    environment:
+      TRUST_PROXY: "1" # перед сервером ровно один прокси — Caddy: IP зрителя берём из X-Forwarded-For
+      STATE_FILE: /state/room.json # где фильм и на какой минуте — переживает перезапуск
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ${CINEMA_HOME:-/opt/cinema}/media:/media:ro
+      - ${CINEMA_HOME:-/opt/cinema}/state:/state
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

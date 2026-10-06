@@ -29,6 +29,7 @@
   let presenceSeen = false;
   let videoReady = false;
   let videoError = false;
+  let videoRetries = 0, retryTimer = 0;
   let court = null;
   let joinedAt = 0;
 
@@ -119,6 +120,8 @@
     if (video.getAttribute('src') === src) return;
     videoReady = false;
     videoError = false;
+    videoRetries = 0;
+    clearTimeout(retryTimer);
     ignoreEventsUntil = now() + 800;
     video.src = src;
     setupTracks(file);
@@ -217,7 +220,8 @@
   video.addEventListener('seeked', () => {
     if (selfSeek) { selfSeek = false; return; }
     if (now() < ignoreEventsUntil || !joined) return;
-    sendControl(!video.paused, video.currentTime, causeNow());
+    // во время общего отсчёта видео ещё стоит, но фильм уже запущен: перемотка не должна его отменять
+    sendControl(!video.paused || counting(), video.currentTime, causeNow());
   });
   video.addEventListener('ended', () => { if (joined) sendControl(false, video.duration, 'ended'); });
 
@@ -261,8 +265,9 @@
   for (const ev of ['playing', 'canplay']) video.addEventListener(ev, () => { clearTimeout(stallTimer); if (video.readyState >= 3) setBuffering(false); });
 
   // --- браузер заблокировал воспроизведение ---
-  function onBlocked() {
-    if (!joined) return;
+  function onBlocked(err) {
+    // AbortError — play() перебили pause() или перезагрузкой файла; это не запрет браузера
+    if (!joined || (err && err.name === 'AbortError')) return;
     blocked = true;
     notice('blocked', 'Браузер остановил фильм. Нажмите «Продолжить», чтобы догнать.');
     renderControls();
@@ -746,9 +751,30 @@
     });
   }
 
-  video.addEventListener('canplay', () => { videoReady = true; renderLobby(); });
+  video.addEventListener('canplay', () => { videoReady = true; videoRetries = 0; renderLobby(); });
   video.addEventListener('loadeddata', () => { videoReady = true; renderLobby(); });
-  video.addEventListener('error', () => { videoError = true; renderLobby(); if (joined) notice('blocked', 'Этот файл не открывается в браузере. Нужен mp4 (H.264 и AAC).'); });
+  // Ошибка видео чаще всего — обрыв связи (смена Wi-Fi на мобильный, выкладка новой версии сервера), а не формат
+  // файла. Поэтому сначала тихо перезагружаем тот же файл и возвращаемся на позицию зала, и только если не помогло,
+  // говорим про формат. Неподходящий формат виден сразу, до первой картинки: ему хватит одной повторной попытки.
+  video.addEventListener('error', () => {
+    const src = video.getAttribute('src');
+    const unsupported = video.error && video.error.code === 4 && !videoReady;
+    if (src && videoRetries < (unsupported ? 1 : 5)) {
+      videoRetries++;
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(() => {
+        if (video.getAttribute('src') !== src) return; // пока ждали, выбрали другой фильм
+        videoReady = false;
+        ignoreEventsUntil = now() + 1500;
+        video.load();
+        apply({ hard: true });
+      }, 1000 * videoRetries);
+      return;
+    }
+    videoError = true;
+    renderLobby();
+    if (joined) notice('blocked', 'Этот файл не открывается в браузере. Нужен mp4 (H.264 и AAC).');
+  });
 
   if (isIOS && !standalone) $('installHint').hidden = false;
 

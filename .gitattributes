@@ -1,0 +1,4 @@
+# Всё, что выполняется на Linux-сервере, — с LF даже в клоне на Windows (core.autocrlf), иначе bash падает на \r
+*.sh text eol=lf
+Dockerfile text eol=lf
+deploy/* text eol=lf
