@@ -37,6 +37,14 @@ if (USERS.size === 0) {
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest();
 const safeEqual = (a, b) => crypto.timingSafeEqual(sha(a), sha(b));
 
+// Данные от клиента: битая строка не должна бросать исключение и ронять процесс.
+const safeDecode = (s) => {
+  try { return decodeURIComponent(s); } catch { return null; }
+};
+const pathnameOf = (req) => {
+  try { return new URL(req.url, 'http://x').pathname; } catch { return null; }
+};
+
 // --- сессии: подписанный cookie "user.expires.hmac" ---
 function sign(payload) {
   return crypto.createHmac('sha256', SECRET).update(payload).digest('base64url');
@@ -48,7 +56,9 @@ function makeToken(user) {
 function readUser(req) {
   const cookie = (req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(COOKIE + '='));
   if (!cookie) return null;
-  const [u, exp, mac] = decodeURIComponent(cookie.slice(COOKIE.length + 1)).split('.');
+  const value = safeDecode(cookie.slice(COOKIE.length + 1));
+  if (!value) return null;
+  const [u, exp, mac] = value.split('.');
   if (!u || !exp || !mac) return null;
   const payload = `${u}.${exp}`;
   if (!safeEqual(mac, sign(payload)) || Number(exp) < Date.now()) return null;
@@ -64,7 +74,15 @@ function tooManyAttempts(ip) {
   attempts.set(ip, list);
   return list.length >= 5;
 }
-const clientIp = (req) => (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+// X-Forwarded-For может прислать кто угодно, поэтому верим ему, только если явно сказано, сколько прокси стоит
+// перед сервером (TRUST_PROXY). Каждый прокси дописывает адрес справа, так что клиент — N-й адрес с конца,
+// а всё, что левее, мог подставить сам клиент.
+const TRUST_PROXY = Number(process.env.TRUST_PROXY) || 0;
+function clientIp(req) {
+  const chain = (req.headers['x-forwarded-for'] || '').split(',').map((s) => s.trim()).filter(Boolean);
+  chain.push(req.socket.remoteAddress || '');
+  return chain[Math.max(chain.length - 1 - TRUST_PROXY, 0)];
+}
 
 // --- состояние комнаты (единственной) ---
 const room = { file: null, playing: false, position: 0, updatedAt: Date.now() };
@@ -116,7 +134,7 @@ function serveStatic(res, file) {
     'Content-Type': STATIC_TYPES[path.extname(full)] || 'application/octet-stream',
     'Cache-Control': 'no-cache',
   });
-  fs.createReadStream(full).pipe(res);
+  fs.createReadStream(full).on('error', () => res.destroy()).pipe(res);
 }
 
 function serveVideo(req, res, name) {
@@ -156,11 +174,12 @@ function serveVideo(req, res, name) {
   fs.createReadStream(full, { start, end }).on('error', () => res.destroy()).pipe(res);
 }
 
-const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, 'http://x');
+async function handle(req, res) {
+  const pathname = pathnameOf(req);
+  if (pathname === null) { res.writeHead(400).end('Bad request'); return; }
   const user = readUser(req);
 
-  if (req.method === 'POST' && url.pathname === '/login') {
+  if (req.method === 'POST' && pathname === '/login') {
     const ip = clientIp(req);
     if (tooManyAttempts(ip)) { res.writeHead(429).end('Слишком много попыток, подождите 5 минут'); return; }
     let form;
@@ -183,39 +202,50 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === '/logout') {
+  if (pathname === '/logout') {
     res.writeHead(303, { 'Set-Cookie': `${COOKIE}=; Max-Age=0; Path=/`, Location: '/login' }).end();
     return;
   }
 
-  if (url.pathname === '/login') return serveStatic(res, 'login.html');
-  if (url.pathname === '/health') { res.writeHead(200).end('ok'); return; }
+  if (pathname === '/login') return serveStatic(res, 'login.html');
+  if (pathname === '/health') { res.writeHead(200).end('ok'); return; }
 
   if (!user) {
-    if (url.pathname === '/') { res.writeHead(303, { Location: '/login' }).end(); return; }
+    if (pathname === '/') { res.writeHead(303, { Location: '/login' }).end(); return; }
     res.writeHead(401).end('Unauthorized');
     return;
   }
 
-  if (url.pathname === '/') return serveStatic(res, 'index.html');
-  if (url.pathname === '/app.js') return serveStatic(res, 'app.js');
-  if (url.pathname === '/style.css') return serveStatic(res, 'style.css');
-  if (url.pathname === '/api/media') {
+  if (pathname === '/') return serveStatic(res, 'index.html');
+  if (pathname === '/app.js') return serveStatic(res, 'app.js');
+  if (pathname === '/style.css') return serveStatic(res, 'style.css');
+  if (pathname === '/api/media') {
     ensureFile();
     res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ user, files: listMedia() }));
     return;
   }
-  if (url.pathname.startsWith('/video/')) {
-    return serveVideo(req, res, decodeURIComponent(url.pathname.slice(7)));
+  if (pathname.startsWith('/video/')) {
+    const name = safeDecode(pathname.slice(7));
+    if (name === null) { res.writeHead(400).end('Bad request'); return; }
+    return serveVideo(req, res, name);
   }
   res.writeHead(404).end('Not found');
+}
+
+// Непредвиденная ошибка в обработчике — 500 для одного запроса, а не падение всего сервера.
+const server = http.createServer((req, res) => {
+  handle(req, res).catch((err) => {
+    console.error(err);
+    if (res.headersSent) res.destroy();
+    else res.writeHead(500).end();
+  });
 });
 
 // --- WebSocket ---
 const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
 server.on('upgrade', (req, socket, head) => {
   const user = readUser(req);
-  if (!user || new URL(req.url, 'http://x').pathname !== '/ws') {
+  if (!user || pathnameOf(req) !== '/ws') {
     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
     socket.destroy();
     return;
@@ -233,9 +263,17 @@ function broadcast(msg, except) {
 const roster = () => [...new Set([...wss.clients].map((c) => c.user))];
 const num = (v) => (Number.isFinite(v) && v >= 0 ? v : null);
 
+// Когда все ушли, ставим комнату на паузу там, где ушёл последний, иначе фильм «досматривается» без зрителей.
+// Пауза не сразу: короткий обрыв связи у единственного зрителя не должен останавливать ему фильм.
+const EMPTY_ROOM_PAUSE_MS = 30 * 1000;
+let emptyRoomTimer = null;
+
 wss.on('connection', (ws) => {
   ws.alive = true;
   ws.on('pong', () => { ws.alive = true; });
+  // битый кадр или превышение maxPayload: ws сам закроет соединение, без обработчика процесс бы упал
+  ws.on('error', (err) => console.warn(`ws ${ws.user}: ${err.message}`));
+  clearTimeout(emptyRoomTimer);
   ensureFile();
   send(ws, { type: 'state', ...snapshot(), by: null, serverTime: Date.now() });
   broadcast({ type: 'presence', users: roster() });
@@ -244,6 +282,7 @@ wss.on('connection', (ws) => {
   ws.on('message', (raw) => {
     let m;
     try { m = JSON.parse(raw); } catch { return; }
+    if (!m) return;
     if (m.type === 'ping') { send(ws, { type: 'pong', t: m.t, serverTime: Date.now() }); return; }
     if (m.type === 'select' && listMedia().includes(m.file)) {
       Object.assign(room, { file: m.file, playing: false, position: 0, updatedAt: Date.now() });
@@ -258,7 +297,15 @@ wss.on('connection', (ws) => {
     for (const c of wss.clients) send(c, out);
   });
 
-  ws.on('close', () => broadcast({ type: 'presence', users: roster() }));
+  ws.on('close', () => {
+    broadcast({ type: 'presence', users: roster() });
+    if (wss.clients.size > 0 || !room.playing) return;
+    const position = currentPosition();
+    clearTimeout(emptyRoomTimer);
+    emptyRoomTimer = setTimeout(() => {
+      Object.assign(room, { playing: false, position, updatedAt: Date.now() });
+    }, EMPTY_ROOM_PAUSE_MS);
+  });
 });
 
 // Периодически рассылаем эталонное состояние (коррекция дрейфа) и убираем «мёртвые» соединения.

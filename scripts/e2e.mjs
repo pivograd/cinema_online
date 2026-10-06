@@ -43,6 +43,8 @@ try {
   // без логина — доступа нет
   check('видео без логина закрыто', (await fetch(BASE + '/video/test.webm')).status === 401);
   check('главная без логина → /login', (await fetch(BASE + '/', { redirect: 'manual' })).headers.get('location') === '/login');
+  const broken = await fetch(BASE + '/', { headers: { cookie: 'cinema_session=%E0%A4%A' }, redirect: 'manual' });
+  check('битая cookie не роняет сервер', broken.headers.get('location') === '/login' && (await fetch(BASE + '/health')).ok);
   const bad = await fetch(BASE + '/login', { method: 'POST', body: 'user=anna&password=wrong', headers: { 'content-type': 'application/x-www-form-urlencoded' }, redirect: 'manual' });
   check('неверный пароль отклонён', bad.headers.get('location') === '/login?error=1');
 
