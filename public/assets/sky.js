@@ -311,6 +311,8 @@ void main(){
     const tv = (o, now) => { const u = (now - o.t0) / FADE; if (u >= 1) return o.to; const e = u <= 0 ? 0 : u * u * (3 - 2 * u); return o.from + (o.to - o.from) * e; };
     const retarget = (o, to, now) => { if (o.to === to) return; o.from = tv(o, now); o.to = to; o.t0 = now; };
     const slots = Array.from({ length: 6 }, () => ({ id: null, pres: tween(0), watch: tween(0), joined: -1e9 }));
+    // звёзды закреплены за людьми одинаково у обоих; своя (me) может быть и Минтакой, и Альнитаком
+    let meSlot = 0;
     const gap = tween(1); // без людей (страница входа) просвет раскрыт целиком
     let lastChange = -1e9;
     const pres = new Float32Array(6), watch = new Float32Array(6);
@@ -561,7 +563,7 @@ void main(){
       const nearRow = row(rNear, hbNear, s, false);
 
       // слуховое окно — под звездой смотрящего; труба с дымком — по ветру, вправо
-      const tx = Math.round(Math.min(W * 0.92, Math.max(W * (P ? 0.25 : 0.55), A[0])));
+      const tx = Math.round(Math.min(W * 0.92, Math.max(W * (P ? 0.25 : 0.55), (meSlot === 1 ? B : A)[0])));
       const sx = Math.round(W * (P ? 0.86 : 0.83));
       for (const x of [tx, sx]) { const b = at(nearRow, x); if (b.type === 'wall' || b.type === 'gable' || b.w < 40 * s) shape(b, 'hip', rNear, hbNear, s); }
 
@@ -993,9 +995,10 @@ void main(){
       const red = reduced();
       const t = (now - T0) / 1000;
       for (let i = 0; i < 6; i++) { pres[i] = tv(slots[i].pres, now); watch[i] = tv(slots[i].watch, now); }
-      // второй входит со своим дыханием, и за пару секунд оно попадает в такт со смотрящим
-      const phB = 1.9 * Math.exp(-Math.max(0, (now - slots[1].joined) / 1000) / 0.75);
-      const bA = red ? 0.8 : breath(t, 0), bB = red ? 0.8 : breath(t, phB);
+      // второй входит со своим дыханием, и за пару секунд оно попадает в такт со своей звездой
+      const other = 1 - meSlot;
+      const ph = 1.9 * Math.exp(-Math.max(0, (now - slots[other].joined) / 1000) / 0.75);
+      const bA = red ? 0.8 : breath(t, meSlot === 0 ? 0 : ph), bB = red ? 0.8 : breath(t, meSlot === 1 ? 0 : ph);
       if (glOK) {
         gl.uniform1f(U.uTime, red ? 46 : 40 + t);
         gl.uniform1f(U.uOpen, red ? 1 : ease((t - 0.1) / 2.3));
@@ -1012,7 +1015,7 @@ void main(){
         drawAura(bA, bB);
       }
       drawBelt(pres[0], pres[1]);
-      drawHearth(pres[0], bA);
+      drawHearth(pres[meSlot], meSlot === 1 ? bB : bA);
       if (!red) tickGlass(t);
     }
 
@@ -1077,21 +1080,26 @@ void main(){
       const now = performance.now();
       const arr = Array.isArray(list) ? list : [];
       let extrasChanged = false;
+      const mine = arr[1] && arr[1].me ? 1 : 0;
+      const moved = mine !== meSlot;
+      meSlot = mine;
+      const other = 1 - meSlot;
       for (let i = 0; i < 6; i++) {
         const p = arr[i], sl = slots[i];
         const id = p && p.id != null ? p.id : null;
         if (i >= 2 && (id == null) !== (sl.id == null)) extrasChanged = true;
         sl.id = id;
         const lit = p && p.lit ? 1 : 0;
-        if (i === 1 && lit && sl.pres.to === 0) sl.joined = now;
+        if (i === other && lit && sl.pres.to === 0) sl.joined = now;
         if (sl.pres.to !== lit || sl.watch.to !== (p && p.watching ? 1 : 0)) lastChange = now;
         retarget(sl.pres, lit, now);
         retarget(sl.watch, p && p.watching ? 1 : 0, now);
       }
-      const g = arr.length ? slots[1].pres.to : 1;
+      const g = arr.length ? slots[other].pres.to : 1;
       if (gap.to !== g) lastChange = now;
       retarget(gap, g, now);
       if (extrasChanged && W) { pickField(); if (glOK) gl.uniform4fv(U.uStar, fieldArr); }
+      if (moved && W) rebuild(); // окно под своей звездой переезжает на другой край
       kick();
     }
     function point(id) {

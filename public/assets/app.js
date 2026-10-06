@@ -37,6 +37,11 @@
   // огонёк — знак присутствия: тёплый, когда человек в сети, пустое серебряное кольцо, когда нет
   const LAMP = '<span class="lamp" aria-hidden="true"></span>';
   const others = () => everyone.filter((u) => u !== me);
+  // как зовут человека на экране: логин остаётся логином для сравнений, показываем имя
+  const NAMES = { egor: 'Егор', alina: 'Алина' };
+  const nameOf = (u) => (u ? NAMES[String(u).toLowerCase()] || u : '');
+  // звёзды Пояса закреплены за людьми по общему списку зрителей: у обоих на экранах одна и та же картина
+  const skyOrder = () => (everyone.includes(me) ? everyone : [me, ...others()]).filter(Boolean);
   const fmt = (s) => {
     s = Math.max(0, Math.floor(s || 0));
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, '0');
@@ -108,7 +113,7 @@
 
   function describe(m, prev, expected) {
     if (!m.by || !prev) return;
-    const who = m.by === me ? 'Вы' : m.by;
+    const who = m.by === me ? 'Вы' : nameOf(m.by);
     if (m.cause === 'select') { toast(`${who}: новый фильм, «${title(m.file)}»`); return; }
     if (m.cause === 'ended') { toast('Фильм закончился'); return; }
     if (m.cause === 'wait') return; // это постоянная плашка, её ставит renderWait
@@ -122,8 +127,8 @@
   }
   function renderWait() {
     if (!last || last.playing || !last.hold) { notice('wait', null); return; }
-    if (last.hold === me) notice('wait', `Догружаем фильм у вас. ${others().join(', ') || 'Второй зритель'} ждёт.`);
-    else notice('wait', `${last.hold}: догружается, ждём. Нажмите «Продолжить», чтобы не ждать.`);
+    if (last.hold === me) notice('wait', `Догружаем фильм у вас. ${others().map(nameOf).join(', ') || 'Второй зритель'} ждёт.`);
+    else notice('wait', `${nameOf(last.hold)}: догружается, ждём. Нажмите «Продолжить», чтобы не ждать.`);
   }
 
   // --- источник видео ---
@@ -437,8 +442,8 @@
     status = m.status || {};
     if (presenceSeen && joined) {
       for (const u of others()) {
-        if (online.has(u) && !before.has(u)) toast(`${u}: в сети`);
-        else if (!online.has(u) && before.has(u)) toast(`${u}: не в сети`);
+        if (online.has(u) && !before.has(u)) toast(`${nameOf(u)}: в сети`);
+        else if (!online.has(u) && before.has(u)) toast(`${nameOf(u)}: не в сети`);
       }
     }
     presenceSeen = true;
@@ -461,17 +466,16 @@
       li.className = on ? 'on' : 'off';
       li.innerHTML = LAMP;
       const s = status[u] || {};
-      let text = u === me ? `${u} (вы)` : u;
+      let text = u === me ? `${nameOf(u)} (вы)` : nameOf(u);
       if (u !== me && !on) text += ', не в сети';
       else if (u !== me && s.buffering) text += ', догружается';
       li.append(text);
       list.append(li);
     }
-    // огонёк у строки «boris здесь» в лобби
-    $('together').parentElement.dataset.lit = String(others().some((u) => online.has(u)));
     if (sky) {
-      sky.setPeople([me, ...others()].filter(Boolean).map((u) => ({
+      sky.setPeople(skyOrder().map((u) => ({
         id: u,
+        me: u === me,
         lit: u === me ? connected : online.has(u),
         watching: u !== me && online.has(u) && !!(status[u] && status[u].joined) && !!(last && last.playing),
       })));
@@ -489,13 +493,11 @@
     el.className = 'mark';
     const nm = document.createElement('span');
     nm.className = 'nm';
-    const sub = document.createElement('span');
-    sub.className = 'sub';
-    el.append(nm, sub);
+    el.append(nm);
     const line = document.createElement('div');
     line.className = 'lead';
     $('labels').append(line, el);
-    m = { el, nm, sub, line, star: -1, text: '' };
+    m = { el, nm, line, text: '' };
     marks.set(u, m);
     // проявляются, когда уже стоят на месте
     requestAnimationFrame(() => requestAnimationFrame(() => { el.classList.add('shown'); line.classList.add('shown'); }));
@@ -503,7 +505,7 @@
   }
   function placeLabels() {
     if (!sky) return;
-    const people = [me, ...others()].filter(Boolean);
+    const people = skyOrder();
     for (const [u, m] of marks) if (!people.includes(u)) { m.el.remove(); m.line.remove(); marks.delete(u); }
     const f = sky.film();
     const vw = innerWidth, vh = innerHeight, pad = 14;
@@ -513,24 +515,8 @@
       const on = u === me ? connected : online.has(u);
       m.el.classList.toggle('off', !on);
       m.line.classList.toggle('off', !on);
-      const tail = u === me ? ' (вы)' : on ? '' : ' · не в сети';
-      if (m.text !== u + tail) {
-        m.text = u + tail;
-        m.nm.textContent = u;
-        if (tail) {
-          const s = document.createElement('span');
-          s.className = 'you';
-          s.textContent = tail;
-          m.nm.append(s);
-        }
-      }
-      if (m.star !== i && STARS[i]) {
-        m.star = i;
-        const g = document.createElement('i');
-        g.textContent = STARS[i][1];
-        m.sub.textContent = '';
-        m.sub.append(`${STARS[i][0]}, `, g, ' Ориона');
-      }
+      // у звезды только имя: кто здесь, видно по её свету
+      if (m.text !== u) { m.text = u; m.nm.textContent = nameOf(u); }
       const p = sky.point(u);
       m.el.hidden = m.line.hidden = !p || !STARS[i];
       if (m.el.hidden) return;
@@ -570,6 +556,16 @@
         x = Math.min(Math.max(pad, side < 0 ? p.x - r - 36 - w : p.x + r + 36), vw - w - pad);
         y = Math.min(Math.max(pad, p.y - h / 2), vh - h - pad);
       }
+      // подпись легла на текст лобби (низкий экран лёжа): переносим её на сторону звезды, свободную от текста
+      const lob = !joined ? $('join').getBoundingClientRect() : null;
+      const hits = (bx, by) => lob && lob.width && bx < lob.right + 8 && bx + w > lob.left - 8 && by < lob.bottom + 4 && by + h > lob.top - 4;
+      if (hits(x, y)) {
+        right = false;
+        line = [p.x + r + 10, p.y, p.x + r + 30, p.y];
+        x = Math.min(Math.max(pad, p.x + r + 36), vw - w - pad);
+        y = Math.min(Math.max(pad, p.y - h / 2), vh - h - pad);
+        if (hits(x, y)) { line = null; x = Math.min(Math.max(pad, p.x - w / 2), vw - w - pad); y = Math.max(pad, p.y - r - 14 - h); }
+      }
       m.el.classList.toggle('right', right);
       m.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       m.line.hidden = !line;
@@ -600,7 +596,6 @@
     if (!last.file) {
       $('filmTitle').textContent = 'Фильма пока нет';
       state.textContent = 'Положите mp4 в папку media на сервере и обновите страницу.';
-      $('together').textContent = '';
       btn.hidden = true;
       return;
     }
@@ -609,27 +604,17 @@
     setTitle($('preTitle'), title(last.file));
     btn.disabled = !videoReady || videoError;
     const pos = roomPosition();
-    const watcher = others().find((u) => online.has(u) && status[u] && status[u].joined);
+    // на карточке только время, с которого начнётся просмотр; пока фильм идёт, оно тикает
     if (videoError) state.textContent = 'Этот файл не открывается в браузере. Попросите того, кто ставит фильмы, перекодировать его в mp4 (H.264 и AAC).';
-    else if (!videoReady) state.textContent = 'Загружаем фильм…';
-    else if (last.playing && startsInNow()) state.textContent = `Фильм начинается у обоих через ${Math.ceil(startsInNow() / 1000)}…`;
-    else if (last.playing) state.textContent = `${watcher ? `${watcher} уже смотрит` : 'Фильм идёт'}: ${fmt(pos)}. Вы подключитесь на той же секунде.`;
-    else if (last.hold) state.textContent = `На паузе на ${fmt(pos)}: ${last.hold} догружает фильм.`;
-    else if (pos < 2) state.textContent = 'Фильм ещё не начинали. В зале нажмите «Начать у обоих», и он стартует одновременно.';
-    else state.textContent = `На паузе на ${fmt(pos)}. Откроете фильм на этой секунде.`;
-
-    const lines = others().map((u) => {
-      if (!online.has(u)) return `${u} пока не в сети. Кто придёт позже, попадёт на ту же секунду.`;
-      if (status[u] && status[u].joined) return null;
-      return `${u} здесь.`;
-    }).filter(Boolean);
-    $('together').textContent = lines.join(' ');
+    else if (pos < 2 || (last.playing && startsInNow())) state.textContent = 'с начала';
+    else state.textContent = `с ${fmt(pos)}`;
+    if (sky) placeLabels(); // высота карточки могла измениться — подписи у звёзд обходят её заново
   }
   setInterval(() => { if (!joined && last && last.playing) renderLobby(); }, 1000);
 
   function renderTab() {
     const here = others().filter((u) => online.has(u));
-    document.title = here.length ? `${here.join(', ')} здесь · Смотрильня` : 'Смотрильня';
+    document.title = here.length ? `${here.map(nameOf).join(', ')} здесь · Смотрильня` : 'Смотрильня';
     $('favicon').href = here.length ? '/assets/icon-lit.svg' : '/assets/icon.svg';
   }
 
@@ -901,6 +886,8 @@
     stage.classList.add('flying'); // контролы и надписи появятся, когда круг раскроется
     const done = () => {
       stage.style.clipPath = '';
+      for (const k of ['--r', '--w', '--sx', '--sy']) stage.style.removeProperty(k);
+      $('stageRim').style.opacity = '';
       stage.classList.remove('flying');
       body.classList.add('scene-off');
       if (sky) sky.stop();
@@ -918,8 +905,10 @@
     const scene = document.querySelector('.scene');
     scene.style.transformOrigin = `${p.x}px ${p.y}px`;
     const glowEl = $('stageGlow');
-    glowEl.style.setProperty('--sx', `${p.x}px`);
-    glowEl.style.setProperty('--sy', `${p.y}px`);
+    // центр и радиус круга — на самом плеере: по ним рисуются и вспышка, и кромка
+    stage.style.setProperty('--sx', `${p.x}px`);
+    stage.style.setProperty('--sy', `${p.y}px`);
+    const rim = $('stageRim');
     const ease = 'cubic-bezier(0.77, 0, 0.175, 1)';
     // небо чуть подаётся навстречу своей звезде
     const fly = scene.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }], { duration: 800, easing: ease, fill: 'forwards' });
@@ -927,7 +916,11 @@
     const glow = glowEl.animate([{ opacity: 1 }, { opacity: 0.85, offset: 0.4 }, { opacity: 0 }], { duration: 1000, easing: 'ease-out' });
     // только clip-path: маска поверх играющего видео обрезает его по прямоугольнику, а не по кругу
     const open = (t) => {
-      stage.style.clipPath = `circle(${(r0 + (far - r0) * easeInOut(t)).toFixed(1)}px ${at})`;
+      const r = r0 + (far - r0) * easeInOut(t);
+      stage.style.clipPath = `circle(${r.toFixed(1)}px ${at})`;
+      stage.style.setProperty('--r', `${r.toFixed(1)}px`);
+      stage.style.setProperty('--w', `${Math.min(r * 0.5, 140).toFixed(1)}px`);
+      rim.style.opacity = String(t < 0.8 ? 1 : Math.max(0, (1 - t) / 0.2)); // кромка гаснет на последней пятой пути
     };
     let t0 = 0, skipped = false;
     const step = (ts) => {
@@ -977,7 +970,6 @@
     if (joined) notice('blocked', 'Этот файл не открывается в браузере. Нужен mp4 (H.264 и AAC).');
   });
 
-  if (isIOS && !standalone) $('installHint').hidden = false;
 
   // --- запуск ---
   fetch('/api/media')

@@ -41,16 +41,10 @@
 </header>
 
 <main class="lobby" id="join">
-  <p class="here" data-lit="false"><span class="lamp" aria-hidden="true"></span><span id="together"></span></p>
   <h1 class="title" id="filmTitle"></h1>
   <p class="state" id="joinHint">Загружаем фильм…</p>
   <div class="row">
     <button class="btn" id="joinBtn" disabled><span class="lamp" aria-hidden="true"></span>Смотреть</button>
-    <ul class="notes" id="notes">
-      <li>Пауза и перемотка у вас общие: нажимает один, видят оба.</li>
-      <li>Лучше в наушниках, иначе звук фильма попадёт в созвон.</li>
-      <li id="installHint" hidden>На iPhone удобнее с экрана «Домой»: «Поделиться», затем «На экран „Домой“».</li>
-    </ul>
   </div>
   <label class="pick" id="pick" hidden><span>Сменить фильм у обоих</span>
     <select class="select" id="files"></select>
@@ -60,6 +54,7 @@
 <section class="stage" id="stage" aria-label="Плеер">
   <video id="v" playsinline preload="auto"></video>
   <div class="stage-glow" id="stageGlow"></div>
+  <div class="stage-rim" id="stageRim"></div>
   <div class="chrome" id="chrome">
     <div class="p-top">
       <p class="p-title" id="pTitle"></p>
