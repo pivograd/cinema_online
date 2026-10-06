@@ -298,7 +298,9 @@ async function handle(req, res) {
     if (attempt === null) { res.writeHead(303, { Location: '/login?error=limit' }).end(); return; }
     let form;
     try { form = new URLSearchParams(await readBody(req)); } catch { res.writeHead(400).end(); return; }
-    const name = form.get('user') || '';
+    // логин — без учёта регистра и пробелов по краям: на телефоне первую букву легко набрать не той
+    const typed = (form.get('user') || '').trim().toLowerCase();
+    const name = [...USERS.keys()].find((u) => u.toLowerCase() === typed) || '';
     const pass = form.get('password') || '';
     const expected = USERS.get(name);
     // сравниваем всегда, чтобы время ответа не выдавало существование логина
