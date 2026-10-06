@@ -125,6 +125,7 @@ const snapshot = () => ({
   position: currentPosition(),
   startsIn: room.playing ? Math.max(0, room.updatedAt - Date.now()) : 0,
   hold: room.hold,
+  build: BUILD,
 });
 
 // Комната переживает перезапуск сервера (выкладка новой версии, перезагрузка): состояние лежит в STATE_FILE.
@@ -235,6 +236,21 @@ function readBody(req, limit = 4096) {
   });
 }
 
+// Метка сборки — отпечаток всех файлов страницы, меняется с каждой выкладкой. Сервер вписывает её в HTML
+// (<meta name="build" content="__BUILD__">) и отдаёт в /api/media и в сообщениях зала. Не совпала — значит,
+// Safari поднял старую страницу из своего кэша и подтянул к ней новые скрипты; плеер тогда перезагрузится.
+const BUILD = (() => {
+  const hash = crypto.createHash('sha256');
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p); else hash.update(e.name).update(fs.readFileSync(p));
+    }
+  };
+  walk(PUBLIC_DIR);
+  return hash.digest('hex').slice(0, 12);
+})();
+
 // Страницы грузят скрипты, стили и медиа только со своего сервера, без инлайн-кода, и не встраиваются в чужие
 // фреймы. WebSocket разрешаем явно на свой хост — старый Safari не считает ws/wss «своими» по 'self'.
 const HOST_RE = /^[a-z0-9.-]+(:\d+)?$/i;
@@ -260,12 +276,16 @@ function serveStatic(req, res, file) {
     return;
   }
   const ext = path.extname(full);
-  res.writeHead(200, {
+  const headers = {
     'Content-Type': STATIC_TYPES[ext] || 'application/octet-stream',
     'Cache-Control': LONG_CACHE.has(ext) ? 'public, max-age=604800' : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
-    ...(ext === '.html' ? pageHeaders(req) : {}),
-  });
+  };
+  if (ext === '.html') {
+    res.writeHead(200, { ...headers, ...pageHeaders(req) }).end(fs.readFileSync(full, 'utf8').replaceAll('__BUILD__', BUILD));
+    return;
+  }
+  res.writeHead(200, headers);
   pipeline(fs.createReadStream(full), res, () => {});
 }
 
@@ -381,7 +401,7 @@ async function handle(req, res) {
     ensureFile();
     // users — все зрители, а не только те, кто сейчас в сети: интерфейс показывает и тёмные «окна»
     res.writeHead(200, { 'Content-Type': 'application/json' })
-      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs(), hls: listHls() }));
+      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs(), hls: listHls(), build: BUILD }));
     return;
   }
   if (pathname.startsWith('/video/') || pathname.startsWith('/subs/')) {
@@ -434,17 +454,19 @@ function broadcast(msg, except) {
 const roster = () => [...new Set([...wss.clients].map((c) => c.user))];
 const num = (v) => (Number.isFinite(v) && v >= 0 ? v : null);
 const CAUSES = new Set(['user', 'system', 'ended']);
-// у одного человека может быть несколько вкладок: «смотрит», если смотрит хоть в одной, и так же с догрузкой
+// У одного человека бывает несколько вкладок и телефонов. «Смотрит» — если смотрит хоть в одной. «Догружается» —
+// только если догружаются все вкладки, где он в зале: иначе уснувшая вкладка на старом телефоне держала бы зал
+// в «ждём друг друга», пока человек спокойно смотрит с нового.
+const watching = (user) => [...wss.clients].filter((c) => c.user === user && c.joined);
+const stillBuffering = (user) => {
+  const tabs = watching(user);
+  return tabs.length > 0 && tabs.every((c) => c.buffering);
+};
 function presence() {
   const status = {};
-  for (const c of wss.clients) {
-    const s = (status[c.user] ||= { joined: false, buffering: false });
-    s.joined ||= !!c.joined;
-    s.buffering ||= !!c.buffering;
-  }
+  for (const user of roster()) status[user] = { joined: watching(user).length > 0, buffering: stillBuffering(user) };
   return { type: 'presence', users: roster(), status };
 }
-const stillBuffering = (user) => [...wss.clients].some((c) => c.user === user && c.buffering);
 function publish(by, cause) {
   const out = { type: 'state', ...snapshot(), by, cause, serverTime: Date.now() };
   for (const c of wss.clients) send(c, out);
@@ -466,12 +488,26 @@ function pauseIfEmpty() {
 }
 
 // «Ждём друг друга»: кто-то догружается во время просмотра — пауза у всех; догрузился — продолжаем с того же места.
+// Живой плеер сообщает, что догрузился, самое большее через 12 с (он продолжает и с неполным запасом). Если
+// ожидание тянется дольше, отчёты от этого человека устарели (вкладка уснула, телефон потерял сеть):
+// продолжаем без него, а его «догружается» больше не учитываем, пока он сам не пришлёт новое.
+const HOLD_MAX_MS = 25 * 1000;
+let holdTimer = null;
 function onBuffering(user) {
   if (stillBuffering(user)) {
     if (!room.playing || room.hold || room.updatedAt > Date.now()) return;
     Object.assign(room, { playing: false, position: currentPosition(), updatedAt: Date.now(), hold: user });
     publish(user, 'wait');
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      if (room.hold !== user) return;
+      for (const c of watching(user)) c.buffering = false;
+      Object.assign(room, { playing: true, updatedAt: Date.now(), hold: null });
+      publish(user, 'nowait');
+      broadcast(presence());
+    }, HOLD_MAX_MS);
   } else if (room.hold === user) {
+    clearTimeout(holdTimer);
     Object.assign(room, { playing: true, updatedAt: Date.now(), hold: null });
     publish(user, 'resume');
   }
@@ -492,9 +528,19 @@ wss.on('connection', (ws) => {
     try { m = JSON.parse(raw); } catch { return; }
     if (!m) return;
     if (m.type === 'ping') { send(ws, { type: 'pong', t: m.t, serverTime: Date.now() }); return; }
+    // Диагностика плеера зрителя (режим видео, ошибки, блокировка запуска, догрузка) — в лог сервера:
+    // иначе о том, что происходит на телефоне второго зрителя, известно только по запросам в логе Caddy.
+    // Не больше 30 записей в минуту с вкладки.
+    if (m.type === 'diag') {
+      const minute = Math.floor(Date.now() / 60000);
+      if (ws.diagMinute !== minute) { ws.diagMinute = minute; ws.diagCount = 0; }
+      if (++ws.diagCount <= 30) console.log(`diag ${ws.user} ${JSON.stringify(m).slice(0, 700)}`);
+      return;
+    }
     if (m.type === 'status') {
       ws.joined = !!m.joined;
       ws.buffering = !!m.buffering && ws.joined;
+      ws.visible = m.visible !== false;
       onBuffering(ws.user);
       broadcast(presence());
       return;
@@ -505,6 +551,12 @@ wss.on('connection', (ws) => {
     } else if (m.type === 'control') {
       const pos = num(m.position);
       if (pos === null || typeof m.playing !== 'boolean') return;
+      // Пауза «от системы» из фоновой вкладки, когда у того же человека открыта вкладка на виду: это iOS
+      // остановил видео в лишней вкладке (одновременно играет только одно), а не звонок. Зал из-за неё не встаёт.
+      // Если вкладка у человека одна (звонок, телефон убрали в карман), пауза уходит всем, как раньше.
+      const shadow = m.cause === 'system' && ws.visible === false
+        && watching(ws.user).some((c) => c !== ws && c.visible !== false);
+      if (shadow) return;
       // запуск с самого начала — с общим отсчётом, чтобы оба увидели первые секунды
       const countdown = m.playing && !room.playing && pos < 2;
       Object.assign(room, {
@@ -516,7 +568,10 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    if (room.hold === ws.user && !stillBuffering(ws.user)) room.hold = null; // ушёл, не догрузившись: остаёмся на паузе
+    if (room.hold === ws.user && !stillBuffering(ws.user)) {
+      if (watching(ws.user).length) onBuffering(ws.user); // в другой вкладке он смотрит — продолжаем
+      else { clearTimeout(holdTimer); room.hold = null; } // ушёл, не догрузившись: остаёмся на паузе
+    }
     broadcast(presence());
     pauseIfEmpty();
   });
@@ -524,8 +579,11 @@ wss.on('connection', (ws) => {
 
 // Периодически рассылаем эталонное состояние (коррекция дрейфа) и убираем «мёртвые» соединения.
 setInterval(() => {
+  // Обрываем только после трёх пропущенных ответов подряд (~12 с): на маршруте с потерями живой pong бывает
+  // опаздывает дольше одного интервала, и обрыв на первом же пропуске рвал бы зрителю зал посреди фильма.
   for (const c of wss.clients) {
-    if (!c.alive) { c.terminate(); continue; }
+    c.missed = c.alive ? 0 : (c.missed || 0) + 1;
+    if (c.missed >= 3) { c.terminate(); continue; }
     c.alive = false;
     c.ping();
   }

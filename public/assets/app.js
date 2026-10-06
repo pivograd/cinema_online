@@ -118,6 +118,7 @@
     if (m.cause === 'ended') { toast('Фильм закончился'); return; }
     if (m.cause === 'wait') return; // это постоянная плашка, её ставит renderWait
     if (m.cause === 'resume') { toast('Догрузилось, продолжаем'); return; }
+    if (m.cause === 'nowait') { toast(`${who}: долго не догружается, продолжаем без ожидания`); return; }
     if (m.playing !== prev.playing) {
       if (!m.playing) toast(m.cause === 'system' ? `${who}: плеер встал на паузу` : `${who}: пауза`);
       else if (!m.startsIn) toast(`${who}: продолжаем`);
@@ -177,6 +178,7 @@
     // У hls.js свои повторы при обрывах; сюда доходит только то, что он не вытянул сам
     hls.on(Hls.Events.ERROR, (_, d) => {
       if (!d.fatal || source !== current) return;
+      diag('hls-error', { kind: d.type, details: d.details });
       if (d.type === Hls.ErrorTypes.NETWORK_ERROR && videoRetries < 5) {
         videoRetries++;
         clearTimeout(retryTimer);
@@ -220,6 +222,9 @@
     if (!last || !last.file) return;
     ensureSource(last.file);
     if (!joined || blocked) return;
+    // Фоновая вкладка со стоящим видео ничего не делает: на iPhone её запуск отобрал бы звук у вкладки, где
+    // смотрят, а перемотка качала бы фильм мимо неё. Зал догоним, когда вкладку откроют (visibilitychange).
+    if (backgroundTab() && video.paused) return;
 
     // Видео догружается: перемотка сейчас выбросила бы то, что уже скачано, и догрузка началась бы заново
     // (на телефоне это заметнее всего). Плановые тики ждут; если догрузка затянется, сервер поставит зал на паузу
@@ -292,50 +297,122 @@
     ignoreTicksUntil = now() + 2000;
     ws.send(JSON.stringify({ type: 'control', playing, position, cause }));
   }
+  // Вкладка, которую сейчас не видно (кроме «картинки в картинке»). На iPhone одновременно играет только одно
+  // видео: запусти фильм в фоновой вкладке — и iOS поставит на паузу ту, где смотрят.
+  const backgroundTab = () => document.hidden && !document.pictureInPictureElement && video.webkitPresentationMode !== 'picture-in-picture';
   function sendStatus() {
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'status', joined, buffering }));
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'status', joined, buffering, visible: !backgroundTab() }));
   }
+
+  // --- версия страницы ---
+  // Safari умеет поднять страницу из своего кэша (вернулись во вкладку, восстановил после выгрузки) и подтянуть
+  // к старой разметке новые скрипты. Метка сборки в <meta name="build"> должна совпадать с серверной; нет —
+  // перезагружаемся, но не чаще раза на сборку, чтобы не уйти в цикл.
+  const pageBuild = (document.querySelector('meta[name="build"]') || {}).content || '';
+  function staleReload(build) {
+    if (!build || build === pageBuild) return false;
+    let tried = null;
+    try {
+      tried = sessionStorage.getItem('reloadedFor');
+      sessionStorage.setItem('reloadedFor', build);
+    } catch {
+      // без sessionStorage: не перезагружаемся, если эта загрузка уже была перезагрузкой
+      try { if (performance.getEntriesByType('navigation')[0].type === 'reload') tried = build; } catch { tried = build; }
+    }
+    if (tried === build) return false;
+    location.reload();
+    return true;
+  }
+  window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); }); // вернулись «назад» из кэша
+
+  // --- диагностика: что происходит с плеером у зрителя, пишется в лог сервера ---
+  // Без неё о телефоне второго зрителя известно только по запросам в логе Caddy.
+  function diag(event, extra) {
+    if (!ws || ws.readyState !== 1) return;
+    ws.send(JSON.stringify({
+      type: 'diag', event, mode: source && source.mode, t: +video.currentTime.toFixed(1), ahead: +bufferedAhead().toFixed(1),
+      rs: video.readyState, ns: video.networkState, paused: video.paused, joined, blocked, hidden: document.hidden,
+      room: last ? `${last.playing ? '▶' : '❚❚'}${Math.round(roomPosition())}` : null, ...extra,
+    }));
+  }
+  window.addEventListener('error', (e) => diag('js-error', { msg: String(e.message).slice(0, 200), at: `${(e.filename || '').split('/').pop()}:${e.lineno}` }));
+  window.addEventListener('unhandledrejection', (e) => diag('js-error', { msg: String(e.reason && (e.reason.message || e.reason)).slice(0, 200) }));
+  // Пульс раз в 5 с, пока зритель в зале: сколько было перемоток и ожиданий догрузки, скорость, потерянные кадры.
+  // По нему видно, кто дёргает видео, если оно идёт «слайд-шоу».
+  let seekCount = 0, waitCount = 0, lastFrames = null;
+  video.addEventListener('seeking', () => { seekCount++; });
+  video.addEventListener('waiting', () => { waitCount++; });
+  setInterval(() => {
+    if (!joined) return;
+    const q = video.getVideoPlaybackQuality ? video.getVideoPlaybackQuality() : null;
+    const frames = q ? { total: q.totalVideoFrames, dropped: q.droppedVideoFrames } : null;
+    const shown = frames && lastFrames ? frames.total - lastFrames.total : null;
+    const dropped = frames && lastFrames ? frames.dropped - lastFrames.dropped : null;
+    diag('beat', { rate: video.playbackRate, seeks: seekCount, waits: waitCount, frames5s: shown, dropped5s: dropped, w: video.videoWidth });
+    seekCount = 0; waitCount = 0; lastFrames = frames;
+  }, 5000);
   // паузу поставил человек (наши кнопки, клавиши, системный плеер) или система (звонок, наушники)
   const causeNow = () => (now() < intentUntil || video.webkitDisplayingFullscreen || document.pictureInPictureElement ? 'user' : 'system');
 
+  // Какую позицию сообщать залу при паузе и запуске. Своему видео верим, пока оно рядом с позицией зала: после
+  // сбоя загрузки или перезагрузки файла (нативный HLS на iPhone) его отбрасывает в начало, и такое «время»
+  // не должно уехать второму зрителю.
+  const reportPosition = () => (Math.abs(video.currentTime - roomPosition()) < 2 ? video.currentTime : roomPosition());
+  // Системный плеер (iPhone во весь экран, «картинка в картинке») перематывает сам, мы видим только seeked.
+  // Свою перемотку — полосу, кнопки, клавиши, экран блокировки — рассылает userSeek сразу.
+  const systemControls = () => !!(video.webkitDisplayingFullscreen || document.pictureInPictureElement);
+
+  // Пауза «от человека» — только если он нажал именно паузу (или жмёт кнопки системного плеера). Пауза сразу после
+  // нажатия play — это iOS остановил видео сам (например, звук занят звонком), её нельзя выдавать за решение человека.
+  let wantPlayUntil = 0, wantPauseUntil = 0, playedAt = 0;
   video.addEventListener('play', () => {
+    playedAt = now();
     if (now() < ignoreEventsUntil || !joined) return;
-    sendControl(true, video.currentTime, causeNow());
+    sendControl(true, reportPosition(), now() < wantPlayUntil ? 'user' : causeNow());
   });
   video.addEventListener('pause', () => {
+    const wanted = now() < wantPauseUntil || systemControls();
+    if (!wanted && !video.ended) diag('media-pause', { afterPlayMs: Math.round(now() - playedAt), ignored: now() < ignoreEventsUntil });
     if (now() < ignoreEventsUntil || !joined || video.ended) return;
-    sendControl(false, video.currentTime, causeNow());
+    sendControl(false, reportPosition(), wanted ? 'user' : 'system');
   });
   video.addEventListener('seeked', () => {
     if (selfSeek) { selfSeek = false; return; }
-    if (now() < ignoreEventsUntil || !joined) return;
-    // Сдвиг меньше секунды от позиции зала — не перемотка человека, а сам плеер (hls.js перешагивает дырку
-    // между кусками, Safari выравнивается на ключевой кадр). Рассылать такое второму зрителю незачем.
+    // Seeked бывает и от самого плеера: hls.js перешагивает дырку, Safari выравнивается на ключевой кадр,
+    // нативный HLS после сбоя начинает с нуля. Залу уходит только перемотка системными кнопками.
+    if (now() < ignoreEventsUntil || !joined || !systemControls()) return;
     if (Math.abs(video.currentTime - roomPosition()) < 1) return;
     // во время общего отсчёта видео ещё стоит, но фильм уже запущен: перемотка не должна его отменять
-    sendControl(!video.paused || counting(), video.currentTime, causeNow());
+    sendControl(!video.paused || counting(), video.currentTime, 'user');
   });
   video.addEventListener('ended', () => { if (joined) sendControl(false, video.duration, 'ended'); });
 
   function userPlay() {
     intentUntil = now() + 1000;
+    wantPlayUntil = now() + 1000;
     if (blocked) { unblock(); return; }
     // старт с начала идёт через общий отсчёт: играем по команде сервера, а не сразу
-    if (last && !last.playing && video.currentTime < 2) { sendControl(true, video.currentTime, 'user'); return; }
+    const pos = reportPosition();
+    if (last && !last.playing && pos < 2) { sendControl(true, pos, 'user'); return; }
     video.play().catch(onBlocked);
   }
   function userPause() {
     intentUntil = now() + 1000;
-    if (counting()) { sendControl(false, video.currentTime, 'user'); return; }
+    wantPauseUntil = now() + 1000;
+    if (counting()) { sendControl(false, roomPosition(), 'user'); return; }
     video.pause();
   }
   const userToggle = () => (video.paused && !counting() ? userPlay() : userPause());
   function userSeek(t) {
     intentUntil = now() + 1000;
-    selfSeek = false;
-    video.currentTime = Math.min(Math.max(0, t), (video.duration || t) - 0.25);
+    const pos = Math.min(Math.max(0, t), (video.duration || t) - 0.25);
+    // залу — сразу, а не по событию seeked (его шлёт и сам плеер); во время общего отсчёта видео ещё стоит,
+    // но фильм уже запущен — перемотка не должна его отменять
+    if (joined) sendControl(!video.paused || counting(), pos, 'user');
+    selfSeek = true;
+    video.currentTime = pos;
   }
-  const userSkip = (d) => userSeek(video.currentTime + d);
+  const userSkip = (d) => userSeek(reportPosition() + d);
 
   // --- догрузка: «ждём друг друга» ---
   let buffering = false, stallTimer = 0, stallPoll = 0, bufferingSince = 0;
@@ -359,6 +436,7 @@
     if (buffering === on) return;
     buffering = on;
     if (on) bufferingSince = now();
+    diag(on ? 'stall' : 'stall-end', on ? {} : { waited: Math.round((now() - bufferingSince) / 1000) });
     sendStatus();
     clearInterval(stallPoll);
     if (on) stallPoll = setInterval(() => { if (readyToResume()) setBuffering(false); }, 400);
@@ -375,6 +453,7 @@
 
   // --- браузер заблокировал воспроизведение ---
   function onBlocked(err) {
+    diag('play-rejected', { name: err && err.name, msg: err && String(err.message).slice(0, 120) });
     // AbortError — play() перебили pause() или перезагрузкой файла; это не запрет браузера
     if (!joined || (err && err.name === 'AbortError')) return;
     blocked = true;
@@ -392,9 +471,35 @@
   // --- WebSocket ---
   let pingTimer = 0;
   const ping = () => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping', t: now() })); };
+  // На маршруте с потерями новое соединение иногда не устанавливается вовсе, а уже открытое может тихо умереть.
+  // Попытку, которая не открылась за 5 с, бросаем и пробуем снова (иначе iOS ждёт больше минуты, а на экране
+  // «загружается»); открытое соединение, по которому 12 с не пришло ни одного тика (они каждые 4 с), считаем
+  // мёртвым и переподключаемся.
+  let lastMessageAt = 0;
+  setInterval(() => { if (connected && ws && ws.abandon && now() - lastMessageAt > 12000) ws.abandon('silent'); }, 3000);
   function connect() {
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    const sock = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws = sock;
+    let gone = false;
+    const lost = () => {
+      clearInterval(pingTimer);
+      connected = false;
+      if (joined) notice('conn', 'Нет связи. Переподключаемся…');
+      renderAll();
+      setTimeout(connect, Math.min(1000 * 2 ** retry++, 4000));
+    };
+    sock.abandon = (why) => {
+      if (gone) return;
+      gone = true;
+      if (why === 'silent') diag('ws-silent'); // пока сокет ещё открыт: вдруг дойдёт
+      sock.onopen = sock.onclose = sock.onmessage = null;
+      try { sock.close(); } catch { /* уже закрыт */ }
+      lost();
+    };
+    const opening = setTimeout(() => { if (sock.readyState === 0) sock.abandon('timeout'); }, 5000);
     ws.onopen = () => {
+      clearTimeout(opening);
+      lastMessageAt = now();
       retry = 0;
       connected = true;
       notice('conn', null);
@@ -406,22 +511,26 @@
       setTimeout(ping, 1200);
       clearInterval(pingTimer);
       pingTimer = setInterval(ping, 10000);
+      diag('open', { ua: navigator.userAgent.slice(0, 140), build: pageBuild, appleHls, mse: !!window.MediaSource, mms: !!window.ManagedMediaSource });
     };
     ws.onclose = () => {
-      clearInterval(pingTimer);
-      connected = false;
-      if (joined) notice('conn', 'Нет связи. Переподключаемся…');
-      renderAll();
-      setTimeout(connect, Math.min(1000 * 2 ** retry++, 8000));
+      clearTimeout(opening);
+      if (gone) return;
+      gone = true;
+      lost();
     };
     ws.onmessage = (e) => {
+      lastMessageAt = now();
       const m = JSON.parse(e.data);
+      // в лобби устаревшая страница (Safari поднял из кэша, выложили новую версию) перезагружается сама
+      if ((m.type === 'state' || m.type === 'tick') && !joined && staleReload(m.build)) return;
       if (m.type === 'pong') onPong(m);
       else if (m.type === 'presence') onPresence(m);
       else if (m.type === 'state') {
         const expected = roomPosition();
         const prev = last;
         last = { ...m, receivedAt: now() };
+        if (joined) diag('state', { cause: m.cause || null, by: m.by || null, playing: m.playing, pos: +m.position.toFixed(1), hold: m.hold || null });
         if (joined) describe(m, prev, expected);
         ignoreTicksUntil = 0;
         apply({ hard: true });
@@ -839,7 +948,13 @@
       }
     } catch { /* батарея на исходе или запрещено — не страшно */ }
   }
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+  document.addEventListener('visibilitychange', () => {
+    sendStatus(); // сервер знает, какая вкладка на виду: паузы фоновых при открытой основной он не рассылает
+    if (document.visibilityState === 'visible') {
+      keepAwake();
+      if (joined) apply({ hard: true }); // вернулись во вкладку — догоняем зал
+    }
+  });
   function updateMediaMetadata(file) {
     if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -869,7 +984,8 @@
     blocked = false;
     ignoreEventsUntil = now() + 1500;
     // жест пользователя «разблокирует» воспроизведение на iOS/Android: play() строго здесь, до анимации
-    video.play().then(() => apply({ hard: true })).catch(() => {});
+    video.play().then(() => apply({ hard: true })).catch((err) => diag('join-play-rejected', { name: err && err.name }));
+    diag('join');
     apply({ hard: true });
     sendStatus();
     keepAwake();
@@ -887,7 +1003,8 @@
     const done = () => {
       stage.style.clipPath = '';
       for (const k of ['--r', '--w', '--sx', '--sy']) stage.style.removeProperty(k);
-      $('stageRim').style.opacity = '';
+      // старая страница из кэша Safari может прийти без кромки: переход всё равно должен закончиться
+      if ($('stageRim')) $('stageRim').style.opacity = '';
       stage.classList.remove('flying');
       body.classList.add('scene-off');
       if (sky) sky.stop();
@@ -920,7 +1037,7 @@
       stage.style.clipPath = `circle(${r.toFixed(1)}px ${at})`;
       stage.style.setProperty('--r', `${r.toFixed(1)}px`);
       stage.style.setProperty('--w', `${Math.min(r * 0.5, 140).toFixed(1)}px`);
-      rim.style.opacity = String(t < 0.8 ? 1 : Math.max(0, (1 - t) / 0.2)); // кромка гаснет на последней пятой пути
+      if (rim) rim.style.opacity = String(t < 0.8 ? 1 : Math.max(0, (1 - t) / 0.2)); // кромка гаснет на последней пятой пути
     };
     let t0 = 0, skipped = false;
     const step = (ts) => {
@@ -951,6 +1068,7 @@
   video.addEventListener('error', () => {
     if (!source || source.mode === 'hlsjs') return; // у hls.js свои повторы, см. attachHls
     const current = source;
+    diag('video-error', { code: video.error && video.error.code, msg: video.error && String(video.error.message).slice(0, 160), retries: videoRetries });
     const unsupported = video.error && video.error.code === 4 && !videoReady;
     if (videoRetries < (unsupported ? 1 : 5)) {
       videoRetries++;
@@ -975,6 +1093,7 @@
   fetch('/api/media')
     .then((r) => { if (r.status === 401) { location.href = '/login'; throw new Error('401'); } return r.json(); })
     .then((d) => {
+      if (staleReload(d.build)) return;
       me = d.user;
       everyone = d.users && d.users.length ? d.users : [d.user];
       subsByFile = d.subs || {};

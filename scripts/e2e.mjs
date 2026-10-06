@@ -70,7 +70,12 @@ try {
   check('позиции близки (<1с)', Math.abs(sa.t - sb.t) < 1, `Δ=${(sa.t - sb.t).toFixed(2)}`);
 
   // B перематывает → у A тоже
-  await b.evaluate(() => { document.getElementById('v').currentTime = 20; });
+  // перемотка как у человека — полосой прокрутки (прямой currentTime плеер залу не рассылает: так прыгает и он сам)
+  await b.evaluate(() => {
+    const s = document.getElementById('seek');
+    s.value = Math.round((20 / document.getElementById('v').duration) * 1000);
+    s.dispatchEvent(new Event('change'));
+  });
   await sleep(2500);
   sa = await state(a); sb = await state(b);
   check('seek синхронизирован', sa.t > 20 && sa.t < 26 && Math.abs(sa.t - sb.t) < 1, `a=${sa.t.toFixed(1)} b=${sb.t.toFixed(1)}`);
