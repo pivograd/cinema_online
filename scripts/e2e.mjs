@@ -1,5 +1,5 @@
 // E2E: два браузера, логин, синхронный play/pause/seek. Запуск: npm test
-// Переменные: TEST_VIDEO=/путь/к/test.webm (по умолчанию ищет media/*)
+// Переменные: TEST_VIDEO=/путь/к/видео (обязательна, не короче 40 с), CHROMIUM=путь к браузеру
 import { spawn } from 'node:child_process';
 import { mkdtempSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -62,18 +62,18 @@ try {
   check('Range отдаёт 206', r.status === 206 && r.headers.get('content-range')?.startsWith('bytes 0-99/'));
   check('presence виден', (await a.textContent('#who')).includes('boris'), await a.textContent('#who'));
 
-  // A жмёт play → у B тоже играет
+  // A жмёт play → у B тоже играет (старт с самого начала идёт через общий отсчёт 3 с)
   await a.evaluate(() => document.getElementById('v').play());
-  await sleep(2500);
+  await sleep(4500);
   let sa = await state(a), sb = await state(b);
   check('play синхронизирован', !sa.paused && !sb.paused, JSON.stringify({ sa, sb }));
   check('позиции близки (<1с)', Math.abs(sa.t - sb.t) < 1, `Δ=${(sa.t - sb.t).toFixed(2)}`);
 
   // B перематывает → у A тоже
-  await b.evaluate(() => { document.getElementById('v').currentTime = 40; });
+  await b.evaluate(() => { document.getElementById('v').currentTime = 20; });
   await sleep(2500);
   sa = await state(a); sb = await state(b);
-  check('seek синхронизирован', sa.t > 40 && sa.t < 46 && Math.abs(sa.t - sb.t) < 1, `a=${sa.t.toFixed(1)} b=${sb.t.toFixed(1)}`);
+  check('seek синхронизирован', sa.t > 20 && sa.t < 26 && Math.abs(sa.t - sb.t) < 1, `a=${sa.t.toFixed(1)} b=${sb.t.toFixed(1)}`);
   check('после seek продолжают играть', !sa.paused && !sb.paused);
 
   // B ставит паузу → A тоже

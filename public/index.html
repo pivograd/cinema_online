@@ -3,29 +3,109 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Кинотеатр</title>
-<link rel="stylesheet" href="/style.css">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#14171b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Свет в окне">
+<title>Свет в окне</title>
+<link rel="manifest" href="/assets/manifest.webmanifest">
+<link rel="icon" id="favicon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<link rel="preload" href="/assets/fonts/ysabeau-office-cyrillic-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/style.css">
 </head>
-<body>
-<div class="app">
-  <header>
-    <span id="dot" class="dot"></span><span id="conn">подключение…</span>
-    <span id="who"></span>
-    <span class="spacer"></span>
-    <select id="files" hidden></select>
-    <a href="/logout">Выйти</a>
-  </header>
-  <div class="stage">
-    <video id="v" playsinline controls preload="auto"></video>
-    <div id="join" class="overlay">
-      <div>
-        <button id="joinBtn" disabled>Присоединиться к просмотру</button>
-        <p id="joinHint">Загрузка…</p>
+<body data-view="lobby">
+<!-- Иконки: Phosphor Icons (MIT), начертание light. Окно — знак сервиса. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 256 256"><path d="M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 256 256"><path d="M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 256 256"><path d="M222,128a94,94,0,0,1-92.74,94H128a93.43,93.43,0,0,1-64.5-25.65,6,6,0,1,1,8.24-8.72A82,82,0,1,0,70,70l-.19.19L39.44,98H72a6,6,0,0,1,0,12H24a6,6,0,0,1-6-6V56a6,6,0,0,1,12,0V90.34L61.63,61.4A94,94,0,0,1,222,128Z"/></symbol>
+  <symbol id="i-fwd" viewBox="0 0 256 256"><path d="M238,56v48a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h32.55l-30.38-27.8c-.06-.06-.12-.13-.19-.19a82,82,0,1,0-1.7,117.65,6,6,0,0,1,8.24,8.73A93.46,93.46,0,0,1,128,222h-1.28A94,94,0,1,1,194.37,61.4L226,90.35V56a6,6,0,1,1,12,0Z"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 256 256"><path d="M154.64,26.61a6,6,0,0,0-6.32.65L77.94,82H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V32A6,6,0,0,0,154.64,26.61ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l60-46.66Zm50.53-108.85a38,38,0,0,1,0,50.24,6,6,0,1,1-9-7.94,26,26,0,0,0,0-34.37,6,6,0,0,1,9-7.93ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 256 256"><path d="M52.44,36A6,6,0,0,0,43.56,44L78,81.94l-.08.06H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V169.92L203.56,220a6,6,0,0,0,8.88-8.08ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l.11-.08L146,156.72Zm41.5-66.53a26,26,0,0,0,0-34.37,6,6,0,1,1,9-7.93,38,38,0,0,1,0,50.24,6,6,0,0,1-9-7.94ZM107.41,66.68a6,6,0,0,1,1.06-8.42l39.85-31A6,6,0,0,1,158,32v74.83a6,6,0,0,1-12,0V44.27L115.83,67.73A6,6,0,0,1,107.41,66.68ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z"/></symbol>
+  <symbol id="i-cc" viewBox="0 0 256 256"><path d="M224,50H32A14,14,0,0,0,18,64V192a14,14,0,0,0,14,14H224a14,14,0,0,0,14-14V64A14,14,0,0,0,224,50Zm2,142a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H224a2,2,0,0,1,2,2ZM50,136a6,6,0,0,1,6-6H72a6,6,0,0,1,0,12H56A6,6,0,0,1,50,136Zm156,0a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12h96A6,6,0,0,1,206,136Zm-48,32a6,6,0,0,1-6,6H56a6,6,0,0,1,0-12h96A6,6,0,0,1,158,168Zm48,0a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h16A6,6,0,0,1,206,168Z"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 256 256"><path d="M204.24,220.24l-24,24a6,6,0,0,1-8.48-8.48L185.51,222H80a22,22,0,0,1-22-22V104a6,6,0,0,1,12,0v96a10,10,0,0,0,10,10H185.51l-13.75-13.76a6,6,0,0,1,8.48-8.48l24,24A6,6,0,0,1,204.24,220.24ZM80,70a6,6,0,0,0,4.24-10.24L70.49,46H176a10,10,0,0,1,10,10v96a6,6,0,0,0,12,0V56a22,22,0,0,0-22-22H70.49L84.24,20.24a6,6,0,0,0-8.48-8.48l-24,24a6,6,0,0,0,0,8.48l24,24A6,6,0,0,0,80,70Z"/></symbol>
+  <symbol id="i-full" viewBox="0 0 256 256"><path d="M214,48V88a6,6,0,0,1-12,0V54H168a6,6,0,0,1,0-12h40A6,6,0,0,1,214,48ZM88,202H54V168a6,6,0,0,0-12,0v40a6,6,0,0,0,6,6H88a6,6,0,0,0,0-12Zm120-40a6,6,0,0,0-6,6v34H168a6,6,0,0,0,0,12h40a6,6,0,0,0,6-6V168A6,6,0,0,0,208,162ZM88,42H48a6,6,0,0,0-6,6V88a6,6,0,0,0,12,0V54H88a6,6,0,0,0,0-12Z"/></symbol>
+  <symbol id="i-unfull" viewBox="0 0 256 256"><path d="M154,96V48a6,6,0,0,1,12,0V90h42a6,6,0,0,1,0,12H160A6,6,0,0,1,154,96ZM96,154H48a6,6,0,0,0,0,12H90v42a6,6,0,0,0,12,0V160A6,6,0,0,0,96,154Zm112,0H160a6,6,0,0,0-6,6v48a6,6,0,0,0,12,0V166h42a6,6,0,0,0,0-12ZM96,42a6,6,0,0,0-6,6V90H48a6,6,0,0,0,0,12H96a6,6,0,0,0,6-6V48A6,6,0,0,0,96,42Z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 256 256"><path d="M118,216a6,6,0,0,1-6,6H48a6,6,0,0,1-6-6V40a6,6,0,0,1,6-6h64a6,6,0,0,1,0,12H54V210h58A6,6,0,0,1,118,216Zm110.24-92.24-40-40a6,6,0,0,0-8.48,8.48L209.51,122H112a6,6,0,0,0,0,12h97.51l-29.75,29.76a6,6,0,1,0,8.48,8.48l40-40A6,6,0,0,0,228.24,123.76Z"/></symbol>
+</svg>
+
+<div class="scene" aria-hidden="true">
+  <canvas class="scene-base"></canvas>
+  <canvas class="scene-lights"></canvas>
+  <div class="fog fog-a"></div>
+  <div class="fog fog-b"></div>
+  <div class="scene-labels" id="labels"></div>
+</div>
+
+<header class="top">
+  <p class="wordmark">Свет в окне</p>
+  <a class="link" href="/logout"><svg class="icon" aria-hidden="true"><use href="#i-out"/></svg>Выйти</a>
+</header>
+
+<main class="lobby" id="join">
+  <h1 class="film" id="filmTitle">Свет в окне</h1>
+  <p class="state" id="joinHint">Загружаем фильм…</p>
+  <p class="together" id="together"></p>
+  <button class="btn" id="joinBtn" disabled>Смотреть</button>
+  <ul class="notes" id="notes">
+    <li>Пауза и перемотка у вас общие: нажимает один, видят оба.</li>
+    <li>Лучше в наушниках, иначе звук фильма попадёт в созвон.</li>
+    <li id="installHint" hidden>На iPhone удобнее с экрана «Домой»: «Поделиться», затем «На экран „Домой“».</li>
+  </ul>
+  <label class="pick" id="pick" hidden>Сменить фильм у обоих
+    <select class="select" id="files"></select>
+  </label>
+</main>
+
+<section class="stage" id="stage" aria-label="Плеер">
+  <video id="v" playsinline preload="auto"></video>
+  <div class="stage-glow" id="stageGlow"></div>
+  <div class="chrome" id="chrome">
+    <div class="p-top">
+      <p class="p-title" id="pTitle"></p>
+      <div class="p-side">
+        <select class="select p-select" id="filesP" aria-label="Сменить фильм у обоих" hidden></select>
+        <ul class="presence" id="who" aria-label="Кто в зале"></ul>
+      </div>
+    </div>
+    <button class="big-play" id="bigPlay" hidden><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>Продолжить</button>
+    <div class="controls" id="controls">
+      <div class="timeline" id="timeline">
+        <div class="track"><div class="buffered" id="buffered"></div><div class="played" id="played"></div></div>
+        <input class="seek" id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Перемотка у обоих">
+        <div class="tip" id="tip">0:00</div>
+      </div>
+      <div class="bar">
+        <button class="ibtn" id="playBtn" aria-label="Играть"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button>
+        <button class="ibtn" id="backBtn" aria-label="Назад на 10 секунд" title="Назад на 10 секунд (←)"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+        <button class="ibtn" id="fwdBtn" aria-label="Вперёд на 10 секунд" title="Вперёд на 10 секунд (→)"><svg class="icon" aria-hidden="true"><use href="#i-fwd"/></svg></button>
+        <span class="time"><span id="cur">0:00</span> <span class="of">/ <span id="dur">0:00</span></span></span>
+        <span class="spacer"></span>
+        <button class="ibtn" id="ccBtn" aria-label="Субтитры" title="Субтитры (C)" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-cc"/></svg></button>
+        <button class="ibtn" id="muteBtn" aria-label="Выключить звук" title="Звук (M)"><svg class="icon" aria-hidden="true"><use href="#i-sound"/></svg></button>
+        <input class="vol" id="vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость">
+        <button class="ibtn" id="rotateBtn" aria-label="Повернуть плеер" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-rotate"/></svg></button>
+        <button class="ibtn" id="fsBtn" aria-label="Во весь экран" title="Во весь экран (F)"><svg class="icon" aria-hidden="true"><use href="#i-full"/></svg></button>
       </div>
     </div>
   </div>
-  <footer id="status"></footer>
-</div>
-<script src="/app.js"></script>
+  <div class="subs" id="subs" aria-hidden="true"></div>
+  <div class="prestart" id="prestart" hidden>
+    <p class="pre-film" id="preTitle"></p>
+    <p class="pre-note">Фильм начнётся у обоих одновременно, после отсчёта.</p>
+    <button class="btn" id="startBtn">Начать у обоих</button>
+  </div>
+  <div class="countdown" id="countdown" hidden><span class="count-num" id="countNum">3</span><span class="count-note">Фильм начинается у обоих</span></div>
+  <p class="toast" id="status" role="status" aria-live="polite"></p>
+  <p class="notice" id="notice" role="status" aria-live="polite" hidden></p>
+</section>
+
+<svg class="frame-overlay" id="frameOverlay" aria-hidden="true" hidden><path class="sash" fill-rule="evenodd"/><path class="mull"/></svg>
+
+<script src="/assets/court.js"></script>
+<script src="/assets/app.js"></script>
 </body>
 </html>

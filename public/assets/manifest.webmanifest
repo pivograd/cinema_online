@@ -1,0 +1,16 @@
+{
+  "name": "Свет в окне",
+  "short_name": "Свет в окне",
+  "description": "Кинозал на двоих: один фильм, секунда в секунду.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#14171b",
+  "theme_color": "#14171b",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -11,13 +11,22 @@ const MEDIA_DIR = path.resolve(process.env.MEDIA_DIR || path.join(__dirname, 'me
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const COOKIE = 'cinema_session';
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+// вход запоминается на устройстве: вводить пароль каждый вечер — худший экран сервиса
+const SESSION_TTL_MS = (Number(process.env.SESSION_DAYS) || 30) * 24 * 60 * 60 * 1000;
 const VIDEO_TYPES = { '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.webm': 'video/webm' };
+const SUB_TYPES = new Set(['.vtt', '.srt']);
+const COUNTDOWN_MS = 3000; // общий отсчёт, когда фильм запускают с самого начала
 const STATIC_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.woff2': 'font/woff2',
+  '.webmanifest': 'application/manifest+json',
 };
+// шрифты и картинки между релизами не меняются, их можно кешировать; html/css/js всегда берём свежими
+const LONG_CACHE = new Set(['.woff2', '.png', '.svg']);
 
 // USERS="anna:пароль1;boris:пароль2"
 function parseUsers(raw) {
@@ -85,21 +94,58 @@ function clientIp(req) {
 }
 
 // --- состояние комнаты (единственной) ---
-const room = { file: null, playing: false, position: 0, updatedAt: Date.now() };
+// updatedAt может быть в будущем: это общий отсчёт перед стартом, позиция до него стоит на месте.
+// hold — кто догружается: пока он не догрузится, комната стоит на паузе («ждём друг друга»).
+const room = { file: null, playing: false, position: 0, updatedAt: Date.now(), hold: null };
 const currentPosition = () =>
-  room.position + (room.playing ? (Date.now() - room.updatedAt) / 1000 : 0);
+  room.position + (room.playing ? Math.max(0, Date.now() - room.updatedAt) / 1000 : 0);
 const snapshot = () => ({
   file: room.file,
   playing: room.playing,
   position: currentPosition(),
+  startsIn: room.playing ? Math.max(0, room.updatedAt - Date.now()) : 0,
+  hold: room.hold,
 });
 
-function listMedia() {
+function readMediaDir() {
   try {
-    return fs.readdirSync(MEDIA_DIR).filter((f) => VIDEO_TYPES[path.extname(f).toLowerCase()]).sort();
+    return fs.readdirSync(MEDIA_DIR).sort();
   } catch {
     return [];
   }
+}
+const listMedia = () => readMediaDir().filter((f) => VIDEO_TYPES[path.extname(f).toLowerCase()]);
+
+// субтитры лежат рядом с фильмом: film.mp4 → film.srt, film.ru.vtt, film.en.srt
+const SUB_LANGS = { ru: 'Русские', en: 'Английские', uk: 'Украинские', de: 'Немецкие', fr: 'Французские', es: 'Испанские' };
+function listSubs() {
+  const all = readMediaDir();
+  const subs = {};
+  for (const video of listMedia()) {
+    const stem = video.slice(0, -path.extname(video).length);
+    subs[video] = all
+      .filter((f) => SUB_TYPES.has(path.extname(f).toLowerCase()) && (f.startsWith(stem + '.')))
+      .map((file) => {
+        const tag = file.slice(stem.length + 1, -path.extname(file).length).toLowerCase();
+        return { file, lang: tag || 'und', label: SUB_LANGS[tag] || tag || 'Субтитры' };
+      });
+  }
+  return subs;
+}
+// браузер понимает только WebVTT; srt переводим на лету, а старые русские srt часто в windows-1251
+function serveSubs(res, name) {
+  const full = path.join(MEDIA_DIR, name);
+  const ext = path.extname(name).toLowerCase();
+  if (!SUB_TYPES.has(ext) || !full.startsWith(MEDIA_DIR + path.sep) || !fs.existsSync(full)) {
+    res.writeHead(404).end('Not found');
+    return;
+  }
+  const raw = fs.readFileSync(full);
+  let text = new TextDecoder('utf-8').decode(raw);
+  if (text.includes('�')) text = new TextDecoder('windows-1251').decode(raw);
+  text = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+  if (ext === '.srt') text = 'WEBVTT\n\n' + text.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+  res.writeHead(200, { 'Content-Type': 'text/vtt; charset=utf-8', 'Cache-Control': 'no-cache' }).end(text);
 }
 function ensureFile() {
   const files = listMedia();
@@ -130,9 +176,11 @@ function serveStatic(res, file) {
     res.writeHead(404).end('Not found');
     return;
   }
+  const ext = path.extname(full);
   res.writeHead(200, {
-    'Content-Type': STATIC_TYPES[path.extname(full)] || 'application/octet-stream',
-    'Cache-Control': 'no-cache',
+    'Content-Type': STATIC_TYPES[ext] || 'application/octet-stream',
+    'Cache-Control': LONG_CACHE.has(ext) ? 'public, max-age=604800' : 'no-cache',
+    'X-Content-Type-Options': 'nosniff',
   });
   fs.createReadStream(full).on('error', () => res.destroy()).pipe(res);
 }
@@ -181,7 +229,8 @@ async function handle(req, res) {
 
   if (req.method === 'POST' && pathname === '/login') {
     const ip = clientIp(req);
-    if (tooManyAttempts(ip)) { res.writeHead(429).end('Слишком много попыток, подождите 5 минут'); return; }
+    // форма входа сама объясняет, что случилось и сколько ждать
+    if (tooManyAttempts(ip)) { res.writeHead(303, { Location: '/login?error=limit' }).end(); return; }
     let form;
     try { form = new URLSearchParams(await readBody(req)); } catch { res.writeHead(400).end(); return; }
     const name = form.get('user') || '';
@@ -209,6 +258,8 @@ async function handle(req, res) {
 
   if (pathname === '/login') return serveStatic(res, 'login.html');
   if (pathname === '/health') { res.writeHead(200).end('ok'); return; }
+  // стили, шрифты и скрипты нужны и странице входа, поэтому /assets открыт без логина (секретов там нет)
+  if (pathname.startsWith('/assets/')) return serveStatic(res, pathname.slice(1));
 
   if (!user) {
     if (pathname === '/') { res.writeHead(303, { Location: '/login' }).end(); return; }
@@ -217,17 +268,17 @@ async function handle(req, res) {
   }
 
   if (pathname === '/') return serveStatic(res, 'index.html');
-  if (pathname === '/app.js') return serveStatic(res, 'app.js');
-  if (pathname === '/style.css') return serveStatic(res, 'style.css');
   if (pathname === '/api/media') {
     ensureFile();
-    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ user, files: listMedia() }));
+    // users — все зрители, а не только те, кто сейчас в сети: интерфейс показывает и тёмные «окна»
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs() }));
     return;
   }
-  if (pathname.startsWith('/video/')) {
-    const name = safeDecode(pathname.slice(7));
+  if (pathname.startsWith('/video/') || pathname.startsWith('/subs/')) {
+    const name = safeDecode(pathname.slice(pathname.indexOf('/', 1) + 1));
     if (name === null) { res.writeHead(400).end('Bad request'); return; }
-    return serveVideo(req, res, name);
+    return pathname.startsWith('/video/') ? serveVideo(req, res, name) : serveSubs(res, name);
   }
   res.writeHead(404).end('Not found');
 }
@@ -262,11 +313,39 @@ function broadcast(msg, except) {
 }
 const roster = () => [...new Set([...wss.clients].map((c) => c.user))];
 const num = (v) => (Number.isFinite(v) && v >= 0 ? v : null);
+const CAUSES = new Set(['user', 'system', 'ended']);
+// у одного человека может быть несколько вкладок: «смотрит», если смотрит хоть в одной, и так же с догрузкой
+function presence() {
+  const status = {};
+  for (const c of wss.clients) {
+    const s = (status[c.user] ||= { joined: false, buffering: false });
+    s.joined ||= !!c.joined;
+    s.buffering ||= !!c.buffering;
+  }
+  return { type: 'presence', users: roster(), status };
+}
+const stillBuffering = (user) => [...wss.clients].some((c) => c.user === user && c.buffering);
+function publish(by, cause) {
+  const out = { type: 'state', ...snapshot(), by, cause, serverTime: Date.now() };
+  for (const c of wss.clients) send(c, out);
+}
 
 // Когда все ушли, ставим комнату на паузу там, где ушёл последний, иначе фильм «досматривается» без зрителей.
 // Пауза не сразу: короткий обрыв связи у единственного зрителя не должен останавливать ему фильм.
 const EMPTY_ROOM_PAUSE_MS = 30 * 1000;
 let emptyRoomTimer = null;
+
+// «Ждём друг друга»: кто-то догружается во время просмотра — пауза у всех; догрузился — продолжаем с того же места.
+function onBuffering(user) {
+  if (stillBuffering(user)) {
+    if (!room.playing || room.hold || room.updatedAt > Date.now()) return;
+    Object.assign(room, { playing: false, position: currentPosition(), updatedAt: Date.now(), hold: user });
+    publish(user, 'wait');
+  } else if (room.hold === user) {
+    Object.assign(room, { playing: true, updatedAt: Date.now(), hold: null });
+    publish(user, 'resume');
+  }
+}
 
 wss.on('connection', (ws) => {
   ws.alive = true;
@@ -276,29 +355,39 @@ wss.on('connection', (ws) => {
   clearTimeout(emptyRoomTimer);
   ensureFile();
   send(ws, { type: 'state', ...snapshot(), by: null, serverTime: Date.now() });
-  broadcast({ type: 'presence', users: roster() });
-  send(ws, { type: 'presence', users: roster() });
+  broadcast(presence());
 
   ws.on('message', (raw) => {
     let m;
     try { m = JSON.parse(raw); } catch { return; }
     if (!m) return;
     if (m.type === 'ping') { send(ws, { type: 'pong', t: m.t, serverTime: Date.now() }); return; }
+    if (m.type === 'status') {
+      ws.joined = !!m.joined;
+      ws.buffering = !!m.buffering && ws.joined;
+      onBuffering(ws.user);
+      broadcast(presence());
+      return;
+    }
     if (m.type === 'select' && listMedia().includes(m.file)) {
-      Object.assign(room, { file: m.file, playing: false, position: 0, updatedAt: Date.now() });
+      Object.assign(room, { file: m.file, playing: false, position: 0, updatedAt: Date.now(), hold: null });
+      publish(ws.user, 'select');
     } else if (m.type === 'control') {
       const pos = num(m.position);
       if (pos === null || typeof m.playing !== 'boolean') return;
-      Object.assign(room, { playing: m.playing, position: pos, updatedAt: Date.now() });
-    } else {
-      return;
+      // запуск с самого начала — с общим отсчётом, чтобы оба увидели первые секунды
+      const countdown = m.playing && !room.playing && pos < 2;
+      Object.assign(room, {
+        playing: m.playing, position: pos, updatedAt: Date.now() + (countdown ? COUNTDOWN_MS : 0), hold: null,
+      });
+      // system — паузу поставил не человек (звонок, наушники), ended — фильм закончился
+      publish(ws.user, CAUSES.has(m.cause) ? m.cause : 'user');
     }
-    const out = { type: 'state', ...snapshot(), by: ws.user, serverTime: Date.now() };
-    for (const c of wss.clients) send(c, out);
   });
 
   ws.on('close', () => {
-    broadcast({ type: 'presence', users: roster() });
+    if (room.hold === ws.user && !stillBuffering(ws.user)) room.hold = null; // ушёл, не догрузившись: остаёмся на паузе
+    broadcast(presence());
     if (wss.clients.size > 0 || !room.playing) return;
     const position = currentPosition();
     clearTimeout(emptyRoomTimer);

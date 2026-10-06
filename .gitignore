@@ -2,3 +2,8 @@ node_modules/
 media/*
 !media/.gitkeep
 .env
+
+# рабочие файлы Impeccable: скриншоты ревью, логи выбора, локальные настройки
+.impeccable/review/
+.impeccable/questions/
+.impeccable/config.local.json
