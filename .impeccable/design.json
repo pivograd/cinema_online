@@ -1,373 +1,685 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-06T13:31:44.641Z",
-  "title": "Design System: Свет в окне",
+  "generatedAt": "2026-10-06T19:25:13.170Z",
+  "title": "Design System: Смотрильня",
   "extensions": {
     "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Иней",
+        "canonical": "#eeebe5",
+        "oklch": "oklch(94.1% 0.0086 84.6)",
+        "purpose": "Основной текст, название фильма, цифры отсчёта.",
+        "tonalRamp": [
+          "#0d0b07",
+          "#272520",
+          "#44423d",
+          "#63615c",
+          "#85827d",
+          "#a7a59f",
+          "#ccc9c3",
+          "#f1eee8"
+        ]
+      },
+      "ink-2": {
+        "role": "primary",
+        "displayName": "Пепельное серебро",
+        "canonical": "#c9c7c3",
+        "oklch": "oklch(83.0% 0.0060 84.6)",
+        "purpose": "Строка состояния, «Выйти», иконки плеера в покое, «(вы)», год у названия.",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262522",
+          "#43423e",
+          "#63615d",
+          "#84827e",
+          "#a7a5a1",
+          "#cbc9c5",
+          "#f0eeea"
+        ]
+      },
+      "ink-3": {
+        "role": "primary",
+        "displayName": "Туман",
+        "canonical": "#b0b0b0",
+        "oklch": "oklch(75.7% 0.0000 0)",
+        "purpose": "Подписи полей, заметки, подсказки, вторая строка подписи звезды, неактивная кнопка.",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink-4": {
+        "role": "primary",
+        "displayName": "Дальний туман",
+        "canonical": "#8f8e8b",
+        "oklch": "oklch(64.7% 0.0046 91.5)",
+        "purpose": "Только приглушённое «(вы)» у отключившегося себя.",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262523",
+          "#43423f",
+          "#62615e",
+          "#83827f",
+          "#a6a5a2",
+          "#cac9c6",
+          "#efeeeb"
+        ]
+      },
       "silver": {
         "role": "primary",
         "displayName": "Серебро",
-        "canonical": "oklch(93.9% 0.0052 247.9)",
-        "oklch": "oklch(93.9% 0.0052 247.9)",
-        "purpose": "Одна активная кромка: главная кнопка, пройденная линия времени, фокус; текст верхнего уровня.",
+        "canonical": "#e4e2de",
+        "oklch": "oklch(91.3% 0.0058 84.6)",
+        "purpose": "Пройденная часть линии времени, бегунки, громкость.",
         "tonalRamp": [
-          "#090b0d",
-          "#222426",
-          "#3e4042",
-          "#5b5e60",
-          "#7e8083",
-          "#a2a5a8",
-          "#c8cbce",
-          "#eceff2"
+          "#0c0b08",
+          "#262522",
+          "#43423f",
+          "#63615e",
+          "#84827e",
+          "#a7a5a1",
+          "#cbc9c5",
+          "#f0eeea"
         ]
       },
-      "silver-hover": {
+      "plate-ink": {
         "role": "primary",
-        "displayName": "Серебро под рукой",
-        "canonical": "oklch(97.3% 0.0029 264.5)",
-        "oklch": "oklch(97.3% 0.0029 264.5)",
-        "purpose": "Hover главной кнопки при точном указателе.",
+        "displayName": "Свет на плите",
+        "canonical": "#f4ede2",
+        "oklch": "oklch(94.9% 0.0165 79.4)",
+        "purpose": "Надпись главной кнопки и «Продолжить».",
         "tonalRamp": [
-          "#0b0b0c",
-          "#232425",
-          "#3f4041",
-          "#5d5e5f",
-          "#7f8082",
-          "#a4a4a6",
-          "#c9cacc",
-          "#edeef0"
+          "#0f0a04",
+          "#29241c",
+          "#474138",
+          "#666057",
+          "#888178",
+          "#aba49a",
+          "#cfc8bd",
+          "#f4ede2"
         ]
       },
-      "glow": {
-        "role": "secondary",
-        "displayName": "Свет окна",
-        "canonical": "oklch(92.4% 0.0128 244.3)",
-        "oklch": "oklch(92.4% 0.0128 244.3)",
-        "purpose": "Присутствие человека: горящее стекло, ореол, вспышка входа в фильм.",
+      "hair": {
+        "role": "primary",
+        "displayName": "Нить",
+        "canonical": "rgba(226, 218, 206, 0.22)",
+        "oklch": "oklch(89.1% 0.0184 78.2 / 0.22)",
+        "purpose": "Рамки плашек, разделитель заметок, рамка неактивной кнопки.",
         "tonalRamp": [
-          "#070c10",
-          "#1f252a",
-          "#3a4146",
-          "#585f64",
-          "#7a8187",
-          "#9ea6ac",
-          "#c4ccd2",
-          "#e8f0f7"
+          "#0f0a04",
+          "#2a241b",
+          "#474137",
+          "#676056",
+          "#888176",
+          "#aba498",
+          "#d0c8bc",
+          "#f5ede1"
+        ]
+      },
+      "hair-2": {
+        "role": "primary",
+        "displayName": "Кромка",
+        "canonical": "rgba(236, 226, 210, 0.44)",
+        "oklch": "oklch(91.6% 0.0240 79.7 / 0.44)",
+        "purpose": "Рамка главной кнопки, «Продолжить», полей выбора.",
+        "tonalRamp": [
+          "#100a02",
+          "#2b2418",
+          "#494134",
+          "#696052",
+          "#8a8173",
+          "#ada495",
+          "#d2c8b8",
+          "#f7eddd"
+        ]
+      },
+      "pearl": {
+        "role": "secondary",
+        "displayName": "Жемчуг",
+        "canonical": "#f0e6d6",
+        "oklch": "oklch(92.9% 0.0239 79.7)",
+        "purpose": "Свет присутствия: строка «здесь», ореол огонька, тепло звёзд двоих, вспышка входа; фокус, каретка, выделение.",
+        "tonalRamp": [
+          "#100a02",
+          "#2b2418",
+          "#494134",
+          "#696052",
+          "#8a8173",
+          "#ada495",
+          "#d2c8b8",
+          "#f7eddd"
+        ]
+      },
+      "pearl-core": {
+        "role": "secondary",
+        "displayName": "Сердцевина огонька",
+        "canonical": "#fff6ea",
+        "oklch": "oklch(97.7% 0.0186 75.3)",
+        "purpose": "Горящая точка огонька.",
+        "tonalRamp": [
+          "#100a04",
+          "#2a241b",
+          "#484137",
+          "#686056",
+          "#898176",
+          "#aca499",
+          "#d0c8bc",
+          "#f6ede1"
         ]
       },
       "danger": {
         "role": "tertiary",
-        "displayName": "Тёплая тревога",
-        "canonical": "oklch(82.6% 0.0605 28.7)",
-        "oklch": "oklch(82.6% 0.0605 28.7)",
-        "purpose": "Только ошибки: текст ошибки и рамка поля с aria-invalid.",
+        "displayName": "Приглушённая тревога",
+        "canonical": "#e4b4a8",
+        "oklch": "oklch(81.0% 0.0587 34.4)",
+        "purpose": "Только ошибка входа и рамка поля с aria-invalid.",
         "tonalRamp": [
-          "#1f0000",
-          "#3c1712",
-          "#5c332d",
-          "#7c504a",
-          "#a1736c",
-          "#c8978f",
-          "#f0bcb4",
-          "#ffe0d8"
+          "#1d0100",
+          "#3d1911",
+          "#5d362d",
+          "#7f554b",
+          "#a2766b",
+          "#c7988d",
+          "#edbcb0",
+          "#ffe9e4"
         ]
       },
-      "ink": {
+      "sky": {
         "role": "neutral",
-        "displayName": "Плёнка",
-        "canonical": "oklch(17.2% 0.0070 258.4)",
-        "oklch": "oklch(17.2% 0.0070 258.4)",
-        "purpose": "Фон плеера и letterbox; переплёт горящего окна присутствия.",
+        "displayName": "Небо под сценой",
+        "canonical": "#111215",
+        "oklch": "oklch(18.2% 0.0063 271.1)",
+        "purpose": "Фон body и сцены, пока небо не нарисовано.",
         "tonalRamp": [
-          "#090b0e",
-          "#222427",
-          "#3d4044",
-          "#5b5e62",
-          "#7e8084",
-          "#a2a5a9",
-          "#c8cbcf",
+          "#0a0b0e",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef3"
+        ]
+      },
+      "sky-top": {
+        "role": "neutral",
+        "displayName": "Верх неба",
+        "canonical": "#131417",
+        "oklch": "oklch(19.1% 0.0062 271.1)",
+        "purpose": "theme-color и верх неба до первого старта.",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef3"
+        ]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Графит",
+        "canonical": "#16171a",
+        "oklch": "oklch(20.5% 0.0061 271.1)",
+        "purpose": "Пункты списка выбора фильма; основа полупрозрачных плашек.",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef3"
+        ]
+      },
+      "void": {
+        "role": "neutral",
+        "displayName": "Пустота под кадром",
+        "canonical": "#0a0b0d",
+        "oklch": "oklch(14.9% 0.0046 264.5)",
+        "purpose": "Фон плеера и видео; та же тройка — затемнения плеера (--scrim).",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#a3a5a8",
+          "#c7c9cc",
+          "#edeef2"
+        ]
+      },
+      "night-zenith": {
+        "role": "neutral",
+        "displayName": "Ночь в зените",
+        "canonical": "#0a0b0e",
+        "oklch": "oklch(15.0% 0.0067 271.0)",
+        "purpose": "Верх градиента неба за облаками (sky.js).",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#242528",
+          "#414246",
+          "#606165",
+          "#818286",
+          "#a3a5a9",
+          "#c7c9ce",
+          "#edeef3"
+        ]
+      },
+      "night-horizon": {
+        "role": "neutral",
+        "displayName": "Ночь у горизонта",
+        "canonical": "#2a2623",
+        "oklch": "oklch(27.2% 0.0081 59.3)",
+        "purpose": "Низ градиента неба за облаками (sky.js).",
+        "tonalRamp": [
+          "#0e0a08",
+          "#282421",
+          "#45413e",
+          "#65605d",
+          "#86817e",
+          "#a9a4a0",
+          "#cdc8c4",
+          "#f3ede9"
+        ]
+      },
+      "star-silver": {
+        "role": "neutral",
+        "displayName": "Серебро звезды",
+        "canonical": "#d4deed",
+        "oklch": "oklch(89.8% 0.0232 258.4)",
+        "purpose": "Ореолы звёзд в дымке (шейдер).",
+        "tonalRamp": [
+          "#060b15",
+          "#1e2530",
+          "#3a434f",
+          "#59626f",
+          "#7a8391",
+          "#9ca6b4",
+          "#c0cad9",
+          "#e5efff"
+        ]
+      },
+      "star-core": {
+        "role": "neutral",
+        "displayName": "Сердце звезды",
+        "canonical": "#fafcff",
+        "oklch": "oklch(99.0% 0.0045 258.3)",
+        "purpose": "Ядра звёзд Пояса без присутствия.",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#404244",
+          "#606164",
+          "#818285",
+          "#a3a5a8",
+          "#c7c9cc",
+          "#edeff1"
+        ]
+      },
+      "cloud-zenith": {
+        "role": "neutral",
+        "displayName": "Облако в зените",
+        "canonical": "#232528",
+        "oklch": "oklch(26.4% 0.0063 258.4)",
+        "purpose": "Тело гряды вверху: холодный графит.",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232528",
+          "#404245",
+          "#5f6165",
+          "#808286",
+          "#a3a5a9",
+          "#c7c9cd",
           "#eceff3"
         ]
       },
-      "night": {
+      "cloud-city": {
         "role": "neutral",
-        "displayName": "Ночь",
-        "canonical": "oklch(20.3% 0.0093 255.6)",
-        "oklch": "oklch(20.3% 0.0093 255.6)",
-        "purpose": "Фон страниц, theme-color; текст на серебряной кнопке.",
+        "displayName": "Облако над городом",
+        "canonical": "#36322f",
+        "oklch": "oklch(32.0% 0.0078 59.4)",
+        "purpose": "Тело гряды внизу: тёплый серый.",
         "tonalRamp": [
-          "#090b0f",
-          "#212429",
-          "#3d4045",
-          "#5a5e63",
-          "#7d8186",
-          "#a1a5aa",
-          "#c7cbd1",
-          "#eaeff5"
+          "#0e0a08",
+          "#282421",
+          "#45413e",
+          "#65605d",
+          "#86817e",
+          "#a9a4a0",
+          "#cdc8c4",
+          "#f3ede9"
         ]
       },
-      "scrim": {
+      "cloud-lit": {
         "role": "neutral",
-        "displayName": "Затемнение",
-        "canonical": "--scrim: 12, 14, 17 (rgb triplet, used as rgba(var(--scrim), α))",
-        "oklch": "oklch(16.3% 0.0071 258.4)",
-        "purpose": "Всегда с альфой через rgba(var(--scrim), α): 0.5–0.9.",
-        "tonalRamp": [
-          "#090b0e",
-          "#222428",
-          "#3d4044",
-          "#5b5e62",
-          "#7e8085",
-          "#a2a5a9",
-          "#c8cbcf",
-          "#eceff3"
-        ]
-      },
-      "field": {
-        "role": "neutral",
-        "displayName": "Подложка поля",
-        "canonical": "oklch(18.5% 0.0078 248.2)",
-        "oklch": "oklch(18.5% 0.0078 248.2)",
-        "purpose": "Фон полей, выбора и подсказки времени, 78–92 %.",
-        "tonalRamp": [
-          "#090b0e",
-          "#212428",
-          "#3d4044",
-          "#5a5e62",
-          "#7d8185",
-          "#a1a5a9",
-          "#c7cbcf",
-          "#ebeff4"
-        ]
-      },
-      "sash": {
-        "role": "neutral",
-        "displayName": "Рама",
-        "canonical": "oklch(23.7% 0.0113 254.1)",
-        "oklch": "oklch(23.7% 0.0113 254.1)",
-        "purpose": "Рама окна в переходе, перекладина «Т» на горящей PNG-иконке.",
+        "displayName": "Освещённая грань",
+        "canonical": "#4f5359",
+        "oklch": "oklch(44.1% 0.0111 258.4)",
+        "purpose": "Грани облаков к луне и просвету.",
         "tonalRamp": [
           "#080b10",
-          "#20242a",
-          "#3c4046",
-          "#595e64",
-          "#7c8187",
-          "#a0a5ac",
-          "#c6cbd2",
-          "#e9eff6"
+          "#22252b",
+          "#3e4248",
+          "#5d6168",
+          "#7e8389",
+          "#a1a5ac",
+          "#c5c9d0",
+          "#eaeff6"
         ]
       },
-      "stone": {
+      "moon-rim": {
         "role": "neutral",
-        "displayName": "Камень",
-        "canonical": "oklch(27.4% 0.0132 253.0)",
-        "oklch": "oklch(27.4% 0.0132 253.0)",
-        "purpose": "Выключенная главная кнопка.",
+        "displayName": "Лунная кромка",
+        "canonical": "#999ea8",
+        "oklch": "oklch(69.8% 0.0157 264.5)",
+        "purpose": "Серебряные кромки облаков у просвета.",
         "tonalRamp": [
-          "#070c11",
-          "#20252a",
-          "#3b4047",
-          "#585e65",
-          "#7b8188",
-          "#9fa5ad",
-          "#c5cbd3",
-          "#e8eff7"
+          "#080b12",
+          "#21252d",
+          "#3e424b",
+          "#5d616a",
+          "#7e828c",
+          "#a0a5af",
+          "#c4c9d4",
+          "#e9eff9"
         ]
       },
-      "line": {
+      "city-underglow": {
         "role": "neutral",
-        "displayName": "Линия",
-        "canonical": "oklch(52.8% 0.0172 251.3)",
-        "oklch": "oklch(52.8% 0.0172 251.3)",
-        "purpose": "Рамка поля в покое, 1 px (3.38:1 на night — проходит 3:1 для границ элементов).",
+        "displayName": "Подсвет города",
+        "canonical": "#5c5247",
+        "oklch": "oklch(44.5% 0.0219 69.9)",
+        "purpose": "Тёплое брюхо облаков снизу.",
         "tonalRamp": [
-          "#060c13",
-          "#1e252d",
-          "#394049",
-          "#575e68",
-          "#79818b",
-          "#9da5b0",
-          "#c3cbd6",
-          "#e7effb"
+          "#110903",
+          "#2c2319",
+          "#4a4036",
+          "#6a5f54",
+          "#8b8074",
+          "#aea397",
+          "#d3c7ba",
+          "#f8ecdf"
         ]
       },
-      "fog": {
+      "horizon-haze": {
         "role": "neutral",
-        "displayName": "Туман",
-        "canonical": "oklch(64.3% 0.0164 251.2)",
-        "oklch": "oklch(64.3% 0.0164 251.2)",
-        "purpose": "Присутствие того, кто не в сети.",
+        "displayName": "Дымка у горизонта",
+        "canonical": "#62574c",
+        "oklch": "oklch(46.4% 0.0225 67.2)",
+        "purpose": "Туман над крышами.",
         "tonalRamp": [
-          "#060c12",
-          "#1e252c",
-          "#3a4148",
-          "#575e67",
-          "#79818a",
-          "#9da6af",
-          "#c3ccd5",
-          "#e7f0f9"
+          "#110903",
+          "#2d2319",
+          "#4a4035",
+          "#6a5f54",
+          "#8c8074",
+          "#afa396",
+          "#d3c7ba",
+          "#f9ecdf"
         ]
       },
-      "mist": {
+      "smoke": {
         "role": "neutral",
-        "displayName": "Дымка",
-        "canonical": "oklch(72.1% 0.0148 248.0)",
-        "oklch": "oklch(72.1% 0.0148 248.0)",
-        "purpose": "Второстепенный текст: подписи, подсказки, заметки, «Выйти».",
+        "displayName": "Дымок",
+        "canonical": "#6e6760",
+        "oklch": "oklch(51.8% 0.0140 67.5)",
+        "purpose": "Дым из трубы справа.",
         "tonalRamp": [
-          "#070c11",
-          "#1e252b",
-          "#3a4147",
-          "#575f66",
-          "#7a8189",
-          "#9ea6ae",
-          "#c3ccd4",
-          "#e7f0f8"
+          "#0f0a06",
+          "#2a241e",
+          "#47413a",
+          "#676059",
+          "#88817a",
+          "#aba49c",
+          "#d0c8c0",
+          "#f5ede5"
         ]
       },
-      "pale": {
+      "roof-far": {
         "role": "neutral",
-        "displayName": "Бледный",
-        "canonical": "oklch(85.2% 0.0106 248.0)",
-        "oklch": "oklch(85.2% 0.0106 248.0)",
-        "purpose": "Основной текст и иконки контролов.",
+        "displayName": "Дальние крыши",
+        "canonical": "#34302d",
+        "oklch": "oklch(31.2% 0.0078 59.4)",
+        "purpose": "Дальний ряд силуэтов со шпилем (к низу #3b3631).",
         "tonalRamp": [
-          "#080c0f",
-          "#202529",
-          "#3b4045",
-          "#595e63",
-          "#7b8186",
-          "#a0a5ab",
-          "#c5cbd1",
-          "#e9eff5"
+          "#0e0a08",
+          "#282421",
+          "#45413e",
+          "#65605d",
+          "#86817e",
+          "#a9a4a0",
+          "#cdc8c4",
+          "#f3ede9"
+        ]
+      },
+      "roof-mid": {
+        "role": "neutral",
+        "displayName": "Средние крыши",
+        "canonical": "#1e1d1c",
+        "oklch": "oklch(23.1% 0.0024 67.7)",
+        "purpose": "Средний ряд силуэтов.",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#262524",
+          "#434241",
+          "#626160",
+          "#838281",
+          "#a6a5a3",
+          "#cac9c7",
+          "#efeeed"
+        ]
+      },
+      "roof-near": {
+        "role": "neutral",
+        "displayName": "Ближние крыши",
+        "canonical": "#0c0d0e",
+        "oklch": "oklch(15.8% 0.0027 248.0)",
+        "purpose": "Ближний ряд: почти чёрный цинк, трубы, антенны, слуховое окно.",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#a4a5a7",
+          "#c8c9cb",
+          "#edeff0"
+        ]
+      },
+      "window-amber": {
+        "role": "neutral",
+        "displayName": "Янтарь окон",
+        "canonical": "#d9c4a0",
+        "oklch": "oklch(82.9% 0.0537 81.1)",
+        "purpose": "Тусклые окна города (альфа 0.3–0.56) и слуховое окно под своей звездой.",
+        "tonalRamp": [
+          "#120900",
+          "#322201",
+          "#513f1f",
+          "#715e3d",
+          "#937f5d",
+          "#b6a27f",
+          "#dbc6a2",
+          "#ffeccb"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Название «Свет в окне» на входе."
+        "purpose": "Название фильма в лобби (до 15em) и перед стартом (clamp(36px, 4.2vw, 60px))."
       },
       "numeral": {
         "displayName": "Numeral",
-        "purpose": "Цифра общего отсчёта 3-2-1."
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Название фильма в лобби и престарте."
+        "purpose": "Цифры общего отсчёта 3-2-1."
       },
       "lead": {
         "displayName": "Lead",
-        "purpose": "Строка про суть на входе, до 34ch."
+        "purpose": "Строка состояния под названием, до 29em."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Основной текст, значения полей."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Подписи главной кнопки и «Продолжить»."
+      },
+      "presence": {
+        "displayName": "Presence",
+        "purpose": "Строка присутствия в лобби, жемчугом."
+      },
+      "atlas-name": {
+        "displayName": "Atlas name",
+        "purpose": "Имя человека у его звезды."
+      },
+      "atlas-sub": {
+        "displayName": "Atlas sub",
+        "style": "italic",
+        "purpose": "Курсивом «Минтака, δ Ориона»; байеровская буква прямая, 500."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Тосты, notice, таймкод, название в плеере, «Выйти», ошибка."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Подписи полей и выбора фильма."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Заметки под кнопкой, список присутствия в плеере."
+      },
+      "hint": {
+        "displayName": "Hint",
+        "purpose": "Подсказка под формой входа, до 36ch."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Время над линией времени, присутствие на узком экране."
       },
       "subtitle": {
         "displayName": "Subtitle",
         "purpose": "Субтитры фильма на плашке."
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Название в верхней строке лобби."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Основной текст, значения полей, строка состояния."
-      },
-      "button": {
-        "displayName": "Button",
-        "purpose": "Подпись главной кнопки (600). «Продолжить» — тот же кегль, 500."
-      },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Подписи полей, ошибка, «Выйти», тосты, notice, таймкод."
-      },
-      "caption": {
-        "displayName": "Caption",
-        "purpose": "Подсказки, заметки, присутствие, подписи окон."
-      },
-      "micro": {
-        "displayName": "Micro",
-        "purpose": "Время в подсказке над линией времени."
       }
     },
     "shadows": [
       {
-        "name": "plate-float",
-        "value": "0 8px 28px rgba(0, 0, 0, 0.35)",
-        "purpose": "Только тост и notice, плавающие над кадром."
+        "name": "shade",
+        "value": "0 1px 14px rgba(10, 11, 13, 0.5)",
+        "kind": "text-shadow",
+        "purpose": "Текст на небе: лобби, вход, экран перед стартом (--shade)."
+      },
+      {
+        "name": "atlas",
+        "value": "0 1px 12px rgba(10, 11, 13, 0.9), 0 0 2px rgba(10, 11, 13, 0.6)",
+        "kind": "text-shadow",
+        "purpose": "Подписи звёзд прямо в просвете."
+      },
+      {
+        "name": "out",
+        "value": "0 1px 10px rgba(10, 11, 13, 0.7)",
+        "kind": "text-shadow",
+        "purpose": "«Выйти»."
+      },
+      {
+        "name": "plate",
+        "value": "0 14px 34px -18px rgba(0, 0, 0, 0.85)",
+        "purpose": "Главная кнопка; у неактивной нет."
+      },
+      {
+        "name": "plate-resume",
+        "value": "0 18px 40px -20px rgba(0, 0, 0, 0.9)",
+        "purpose": "«Продолжить» над кадром."
+      },
+      {
+        "name": "event",
+        "value": "0 10px 30px -10px rgba(0, 0, 0, 0.6)",
+        "purpose": "Тост и notice."
       },
       {
         "name": "thumb",
         "value": "0 1px 6px rgba(0, 0, 0, 0.5)",
-        "purpose": "Ручка линии времени на светлом кадре."
+        "purpose": "Бегунок перемотки."
       },
       {
-        "name": "window-glow",
-        "value": "filter: drop-shadow(0 0 5px rgba(223, 231, 238, 0.55))",
-        "purpose": "Ореол окна присутствия, когда человек в сети."
-      }
-    ],
-    "scrims": [
-      {
-        "name": "wall",
-        "value": "radial-gradient(115% 80% at 0% 100%, rgba(12,14,17,.9) 0%, rgba(12,14,17,.55) 38%, transparent 66%)",
-        "purpose": "Тёмная стена под текстом входа и лобби."
+        "name": "field-focus",
+        "value": "0 0 0 3px rgba(240, 230, 214, 0.1)",
+        "purpose": "Поле ввода в фокусе."
       },
       {
-        "name": "lobby-top",
-        "value": "linear-gradient(to bottom, rgba(12,14,17,.6), rgba(12,14,17,0))",
-        "purpose": "Верхняя строка лобби."
-      },
-      {
-        "name": "player-top",
-        "value": "linear-gradient(to bottom, rgba(12,14,17,.78), rgba(12,14,17,0))",
-        "purpose": "Верхняя строка плеера."
-      },
-      {
-        "name": "player-bottom",
-        "value": "linear-gradient(to top, rgba(12,14,17,.9) 0%, rgba(12,14,17,.62) 45%, rgba(12,14,17,0))",
-        "purpose": "Контролы плеера."
-      },
-      {
-        "name": "prestart-fog",
-        "value": "radial-gradient(120% 90% at 62% 30%, #59616a 0%, #2b3036 45%, #14171b 100%)",
-        "purpose": "«Туман зала» вместо чёрного кадра до первого старта."
-      },
-      {
-        "name": "join-glow",
-        "value": "radial-gradient(70% 70% at 50% 45%, #dfe7ee, #9fb1c2 70%, #5f6e7c)",
-        "purpose": "Вспышка света при раскрытии окна."
+        "name": "count-glow",
+        "value": "0 0 40px rgba(240, 230, 214, 0.18)",
+        "kind": "text-shadow",
+        "purpose": "Цифры общего отсчёта."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.23, 1, 0.32, 1)",
-        "purpose": "Появления, нажатия, разгорание света (--ease-out)."
+        "purpose": "--ease-out: огонёк, тост, отсчёт, линия времени, иконки."
       },
       {
         "name": "ease-in-out",
         "value": "cubic-bezier(0.77, 0, 0.175, 1)",
-        "purpose": "Раскрытие окна в фильм (--ease-in-out, easeInOutQuart)."
+        "purpose": "--ease-in-out (easeInOutQuart): раскрытие фильма из звезды и подача неба."
+      },
+      {
+        "name": "ease-breath",
+        "value": "cubic-bezier(0.45, 0, 0.55, 1)",
+        "purpose": "--ease-breath: дыхание огонька."
       },
       {
         "name": "press",
-        "value": "140ms var(--ease-out); scale 0.97 / 0.94 / 0.96",
-        "purpose": "Нажатие: кнопка / иконка / «Продолжить»."
+        "value": "180ms cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.985",
+        "purpose": "Нажатие главной кнопки; иконки — scale 0.94 за 140 мс, «Продолжить» — 0.97."
       },
       {
-        "name": "color",
-        "value": "160ms ease",
-        "purpose": "Hover и смена цвета."
+        "name": "breath",
+        "value": "5.6s infinite; opacity 0.35→1, scale 0.82→1",
+        "purpose": "Дыхание присутствия (--breath); на холстах (0.5 − 0.5·cos)^1.25; звезда ±15%, ореол 65–100%."
       },
       {
-        "name": "light",
-        "value": "600ms var(--ease-out)",
-        "purpose": "Окно присутствия зажигается и гаснет; подписи окон."
+        "name": "breath-sync",
+        "value": "phase offset 1.9 rad, decay τ 0.75s",
+        "purpose": "Дыхание пришедшего попадает в такт со смотрящим за 2–3 с."
       },
       {
-        "name": "canvas-light",
-        "value": "12% to target per ~80ms tick (~12 fps)",
-        "purpose": "Свет окон во дворе: ≈0.7 с до двух третей, ≈2 с до полного."
+        "name": "presence-fade",
+        "value": "800ms smoothstep",
+        "purpose": "Смена «пришёл / ушёл / смотрит»: тепло звезды, ореол, просвет, окно; в CSS 0.8s."
+      },
+      {
+        "name": "gap-open",
+        "value": "2300ms cubic-out, delay 100ms, 12%→100%",
+        "purpose": "Просвет раскрывается при загрузке."
+      },
+      {
+        "name": "gap-absent",
+        "value": "75% width, 800ms",
+        "purpose": "Без второго человека просвет сужен; с ним раскрыт целиком."
+      },
+      {
+        "name": "cloud-drift",
+        "value": "~30 fps, time +40s, gap breathing ±4.5% / ±2% (≈11s / 30s)",
+        "purpose": "Облака WebGL."
+      },
+      {
+        "name": "label-reveal",
+        "value": "1.4s ease, delay 0.2s",
+        "purpose": "Подписи звёзд и выноски проявляются, когда стоят на месте."
       },
       {
         "name": "chrome-in",
@@ -377,63 +689,80 @@
       {
         "name": "chrome-out",
         "value": "450ms ease after 2600ms idle",
-        "purpose": "Контролы плеера уходят в тень."
+        "purpose": "Контролы гаснут."
       },
       {
-        "name": "toast-in",
-        "value": "220ms var(--ease-out), from translateY(-6px)",
-        "purpose": "Вход тоста."
-      },
-      {
-        "name": "toast-out",
-        "value": "180ms ease; dwell 3800ms",
-        "purpose": "Уход тоста."
+        "name": "toast",
+        "value": "in 220ms ease-out (rise 6px), out 180ms ease, life 3800ms",
+        "purpose": "Тост общего события."
       },
       {
         "name": "count-digit",
-        "value": "320ms var(--ease-out); opacity 0→1, scale 1.08→1",
-        "purpose": "Каждая цифра отсчёта."
-      },
-      {
-        "name": "subs-lift",
-        "value": "200ms var(--ease-out)",
-        "purpose": "Субтитры поднимаются над контролами."
-      },
-      {
-        "name": "prestart",
-        "value": "300ms ease",
-        "purpose": "Блок престарта."
+        "value": "320ms ease-out, opacity 0→1, scale 1.08→1",
+        "purpose": "Цифра отсчёта."
       },
       {
         "name": "video-reveal",
         "value": "600ms ease",
-        "purpose": "Видео проявляется после престарта."
+        "purpose": "Кадр после первого старта."
       },
       {
-        "name": "join-window",
-        "value": "760ms var(--ease-in-out)",
-        "purpose": "Раскрытие окна: clip-path по углам окна, двор 1→2.6 и растворение."
+        "name": "lobby-out",
+        "value": "260ms ease",
+        "purpose": "Лобби, «Выйти» и подписи гаснут при входе в зал."
+      },
+      {
+        "name": "timeline-expand",
+        "value": "140ms ease-out, scaleY 0.6→1",
+        "purpose": "Дорожка раскрывается при наведении, перемотке, фокусе."
+      },
+      {
+        "name": "join-circle",
+        "value": "800ms easeInOutQuart, soft edge min(r/2, 140px)",
+        "purpose": "Фильм раскрывается кругом из своей звезды; касание — сразу в конец."
+      },
+      {
+        "name": "join-sky-push",
+        "value": "800ms cubic-bezier(0.77, 0, 0.175, 1), scale 1→1.18",
+        "purpose": "Небо подаётся навстречу своей звезде."
       },
       {
         "name": "join-glow",
-        "value": "1100ms ease-out, hold 0.9 until 35%",
-        "purpose": "Вспышка света при раскрытии."
+        "value": "1000ms ease-out, opacity 1→0.85 (40%)→0",
+        "purpose": "Жемчужная вспышка у звезды."
       },
       {
         "name": "join-reduced",
         "value": "220ms ease-out opacity",
-        "purpose": "Раскрытие при prefers-reduced-motion."
+        "purpose": "Вход в зал при reduced-motion."
       },
       {
-        "name": "fog-drift",
-        "value": "80s / 110s ease-in-out infinite alternate",
-        "purpose": "Два слоя тумана над двором."
+        "name": "glass-runner",
+        "value": "cycle 25s, first at 9s: run 3.6s stepped, hold 8.4s, fade 5s, re-form 4s",
+        "purpose": "Капля на стекле, только экран от 900×560."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "clouds frozen (t=46), gap open, breath fixed 0.8, lamp opacity 0.85, toast opacity 160ms",
+        "purpose": "prefers-reduced-motion: reduce."
       }
     ],
     "breakpoints": [
       {
-        "name": "narrow",
+        "name": "phone-portrait",
+        "value": "(max-width: 640px)"
+      },
+      {
+        "name": "narrow-player",
         "value": "(max-width: 600px)"
+      },
+      {
+        "name": "low-laptop",
+        "value": "(min-width: 641px) and (max-height: 760px)"
+      },
+      {
+        "name": "phone-landscape",
+        "value": "(orientation: landscape) and (max-height: 500px)"
       },
       {
         "name": "touch",
@@ -450,259 +779,260 @@
       {
         "name": "reduced-motion",
         "value": "(prefers-reduced-motion: reduce)"
+      },
+      {
+        "name": "scene-portrait",
+        "value": "JS: height > width × 1.1"
+      },
+      {
+        "name": "scene-glass-drops",
+        "value": "JS: not portrait, width ≥ 900, height ≥ 560"
       }
     ],
     "scene": {
-      "seed": 1703,
-      "geometry": {
-        "courtWidthM": 10,
-        "courtDepthM": 7.2,
-        "eyeM": 1.6,
-        "floors": 7,
-        "floorHeightM": 3.1,
-        "window": "1.1 × 1.8 m",
-        "transomFromSill": 0.68,
-        "vanishingPoint": {
-          "landscape": "63% / 33%",
-          "portrait": "55% / 25%"
+      "source": "public/assets/sky.js + public/assets/stars.js",
+      "catalog": "Yale Bright Star Catalogue, stars around Orion: [RA°, Dec°, V mag, T K/100, name]",
+      "projection": "gnomonic, centre RA 84.0957° Dec −1.121°, north up, RA increasing to the left",
+      "belt": {
+        "Mintaka": "смотрящий (δ Ori, 2.23m)",
+        "Alnitak": "второй человек (ζ Ori, 2.05m)",
+        "Alnilam": "общий фильм (ε Ori, 1.70m), всегда серебро"
+      },
+      "extras": [
+        "Betelgeuse",
+        "Rigel",
+        "Bellatrix",
+        "Saiph"
+      ],
+      "layers": [
+        {
+          "name": "sky",
+          "kind": "2D static",
+          "what": "градиент ночи #0a0b0e → #0c0d10 → #141413 → #2a2623 с дизерингом; звёзды каталога, оттенок по температуре 22% к серебру 78%"
         },
-        "roll": {
-          "landscape": "-4deg",
-          "portrait": "-2.5deg"
+        {
+          "name": "belt",
+          "kind": "2D own canvas",
+          "what": "три звезды Пояса; ядро (0.55 + 1.55f) px, ореол (6 + 9f) px, f = 10^(−0.4(m − 1.7)); тепло при присутствии"
+        },
+        {
+          "name": "deck",
+          "kind": "WebGL",
+          "what": "гряда (fbm7, domain warp), просвет вдоль Пояса, спокойный угол, лунные кромки, подсвет города, пелена и пряди, ореолы, тёплый ореол присутствия, дымка, дымок, шум"
+        },
+        {
+          "name": "deck2",
+          "kind": "2D fallback",
+          "what": "та же гряда, посчитанная один раз (t = 46, 60 000 выборок)"
+        },
+        {
+          "name": "aura",
+          "kind": "2D fallback",
+          "what": "спрайт тёплого ореола присутствия"
+        },
+        {
+          "name": "near",
+          "kind": "2D static",
+          "what": "три ряда крыш (wall / hip / mansard / gable), трубы, шпиль, тусклые окна (3 / 5), мокрые коньки, антенны (1 / 2), труба с дымом, слуховое окно под Минтакой"
+        },
+        {
+          "name": "hearth",
+          "kind": "2D own canvas",
+          "what": "свет слухового окна: горит, пока вы в сети, дышит в такт своей звезде"
+        },
+        {
+          "name": "glass",
+          "kind": "2D",
+          "what": "запотевшие нижние углы с конденсатом; капли и стекающая капля только на широком экране"
+        },
+        {
+          "name": "labels",
+          "kind": "DOM",
+          "what": "подписи звёзд и выноски"
         }
+      ],
+      "placement": {
+        "wide": "Belt centre x = W·(0.72 − 0.12·clamp((W − 900)/540)), y = 0.345H, S = min(0.104W, 0.168H); clears text column by 40px; S ≥ 36",
+        "portrait": "Belt centre x = 0.5W, y = 0.285H, S = min(0.25W, 0.118H); top ≥ safe + 84px, bottom ≤ text top − 46px"
       },
-      "moods": {
-        "night": {
-          "hours": "23–5",
-          "sky": [
-            "#5c656f",
-            "#3a424b"
-          ],
-          "fog": "#4f5862",
-          "wallTop": "#2a3037",
-          "wallLow": "#0c0e11",
-          "glass": "#121519",
-          "haze": 0.55,
-          "litNeighbours": 6,
-          "tv": 2
-        },
-        "morning": {
-          "hours": "5–11",
-          "sky": [
-            "#c3c9cf",
-            "#98a1a9"
-          ],
-          "fog": "#a2aab2",
-          "wallTop": "#535b63",
-          "wallLow": "#191c20",
-          "glass": "#22272c",
-          "haze": 0.72,
-          "litNeighbours": 2,
-          "tv": 0
-        },
-        "day": {
-          "hours": "11–17",
-          "sky": [
-            "#b0b7be",
-            "#848d96"
-          ],
-          "fog": "#8f98a1",
-          "wallTop": "#474e56",
-          "wallLow": "#15181c",
-          "glass": "#1e2227",
-          "haze": 0.66,
-          "litNeighbours": 2,
-          "tv": 1
-        },
-        "evening": {
-          "hours": "17–23",
-          "sky": [
-            "#9aa3ad",
-            "#69727c"
-          ],
-          "fog": "#7d8690",
-          "wallTop": "#3d444c",
-          "wallLow": "#121519",
-          "glass": "#191d22",
-          "haze": 0.62,
-          "litNeighbours": 8,
-          "tv": 3
-        }
+      "clouds": {
+        "resolution": "scale 0.75 (dpr < 2) / 1 (dpr ≥ 2) / 1.1 (portrait, dpr ≥ 2), max 1.0e6 px",
+        "fps": "≈30",
+        "power": "low-power",
+        "camera": "fov tan 30° / 39° (portrait), pitch 30.9° / 38.6°",
+        "moon": "far upper-left behind the deck",
+        "gapRadius": "LEN × 0.28 (wide) / 0.2 (portrait)",
+        "calmZone": "opacity 0.97, darker 28%, moonlight ×0.1"
       },
-      "lightTones": {
-        "person": "#e6ebf0",
-        "neighbour": "#a0aab6",
-        "tv": "#acc2d8",
-        "curtain": "rgb(48, 56, 66)"
-      },
-      "light": {
-        "personHalo": "4.2 × window diagonal, alpha .58/.24/.07",
-        "neighbourHalo": "1.8 × diagonal, alpha .10/.035/.01",
-        "personGlass": ".96 → .74",
-        "neighbourGlass": ".62 → .40"
-      },
-      "override": "<html data-mood=\"night|morning|day|evening\">"
+      "performance": "static layers redrawn only on resize (debounce 140ms); belt and hearth redraw only on presence change; render stops in hidden tab and during the film (sky.stop())"
     }
   },
   "components": [
     {
-      "name": "Главная кнопка",
+      "name": "Главная кнопка с огоньком",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Одна серебряная заливка на экран: «Войти», «Смотреть», «Начать у обоих».",
-      "html": "<div class=\"ds-wall-a\"><button class=\"ds-btn\">Смотреть</button> <button class=\"ds-btn\" disabled>Смотреть</button></div>",
-      "css": ".ds-wall-a{background:var(--night,#14171b);padding:24px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif);color:var(--pale,#c9cfd5)}.ds-btn{display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 26px;border:0;border-radius:var(--radius,4px);background:var(--silver,#e8ebee);color:var(--night,#14171b);font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif);font-size:1.0625rem;font-weight:600;letter-spacing:.01em;cursor:pointer;transition:transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),background-color 160ms ease,color 160ms ease}.ds-btn:not(:disabled):hover{background:#f5f6f8}.ds-btn:focus-visible{outline:2px solid var(--silver,#e8ebee);outline-offset:3px}.ds-btn:active{transform:scale(.97)}.ds-btn:disabled{background:var(--stone,#23282e);color:var(--mist,#9ea6ae);cursor:default;transform:none}"
+      "description": "Графитовая плита с вашим огоньком; одна на экран: «Войти», «Смотреть», «Начать у обоих». Неактивная — огонёк гаснет до кольца.",
+      "html": "<div class=\"ds-sky-a\"><button class=\"ds-btn\"><span class=\"ds-lamp-a\"></span>Смотреть</button><button class=\"ds-btn\" disabled><span class=\"ds-lamp-a\"></span>Смотреть</button></div>",
+      "css": ".ds-sky-a{background:linear-gradient(to bottom,#131417,#16171a 60%,#1f1e1d);padding:28px;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);color:var(--ink,#eeebe5);text-shadow:0 1px 14px rgba(10,11,13,.5);display:flex;flex-wrap:wrap;gap:16px}.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;height:54px;padding:0 30px 0 24px;border:1px solid var(--hair-2,rgba(236,226,210,.44));border-radius:var(--radius,3px);background:rgba(236,226,210,.075);box-shadow:0 14px 34px -18px rgba(0,0,0,.85);color:#f4ede2;font:600 17px/1 var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);letter-spacing:.015em;text-shadow:none;cursor:pointer;transition:background-color .35s ease,border-color .35s ease,color .35s ease,transform .18s cubic-bezier(.2,.8,.2,1)}.ds-btn:not(:disabled):hover{background:rgba(236,226,210,.13);border-color:rgba(236,226,210,.7)}.ds-btn:focus-visible{outline:1.5px solid var(--pearl,#f0e6d6);outline-offset:4px}.ds-btn:not(:disabled):active{transform:scale(.985)}.ds-btn:disabled{color:var(--ink-3,#b0b0b0);border-color:var(--hair,rgba(226,218,206,.22));background:rgba(236,226,210,.035);box-shadow:none;cursor:default}.ds-lamp-a{position:relative;display:inline-block;width:8px;height:8px;flex:none}.ds-lamp-a::before,.ds-lamp-a::after{content:'';position:absolute;border-radius:50%}.ds-lamp-a::before{inset:2px;background:var(--pearl-core,#fff6ea);transition:inset .8s cubic-bezier(.23,1,.32,1),background-color .8s ease,box-shadow .8s ease}.ds-lamp-a::after{inset:-7px;background:radial-gradient(closest-side,rgba(240,230,214,.6),rgba(240,230,214,.17) 55%,rgba(240,230,214,0));animation:ds-breathe 5.6s cubic-bezier(.45,0,.55,1) infinite;transition:transform .8s cubic-bezier(.23,1,.32,1)}@keyframes ds-breathe{0%,100%{opacity:.35;scale:.82}50%{opacity:1;scale:1}}@media (prefers-reduced-motion: reduce){.ds-lamp-a::after{animation:none;opacity:.85}}.ds-btn:disabled .ds-lamp-a::before{inset:1.5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(201,199,195,.72)}.ds-btn:disabled .ds-lamp-a::after{transform:scale(0)}"
     },
     {
-      "name": "Продолжить",
+      "name": "«Продолжить»",
       "kind": "button",
       "refersTo": "button-resume",
-      "description": "Большая кнопка в центре кадра на паузе или после блокировки браузера; не серебряная заливка.",
-      "html": "<div class=\"ds-wall-b\"><button class=\"ds-resume\"><svg class=\"ds-resume-icon\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z\"/></svg>Продолжить</button></div>",
-      "css": ".ds-wall-b{background:var(--ink,#0e1013);padding:32px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-resume{display:inline-flex;align-items:center;gap:12px;height:60px;padding:0 24px 0 20px;border:1px solid rgba(232,235,238,.24);border-radius:var(--radius,4px);background:rgba(12,14,17,.88);color:var(--silver,#e8ebee);font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif);font-size:1.0625rem;font-weight:500;cursor:pointer;transition:transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),background-color 160ms ease}.ds-resume-icon{width:28px;height:28px;fill:currentColor}.ds-resume:focus-visible{outline:2px solid var(--silver,#e8ebee);outline-offset:3px}.ds-resume:active{transform:scale(.96)}"
+      "description": "Плита над кадром фильма на паузе; иконка Phosphor Light 26px.",
+      "html": "<div class=\"ds-frame-b\"><button class=\"ds-resume\"><svg viewBox=\"0 0 256 256\" width=\"26\" height=\"26\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z\"/></svg>Продолжить</button></div>",
+      "css": ".ds-frame-b{background:var(--void,#0a0b0d);padding:40px 28px;display:flex;justify-content:center;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif)}.ds-resume{display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 28px 0 22px;border:1px solid var(--hair-2,rgba(236,226,210,.44));border-radius:var(--radius,3px);background:rgba(16,17,20,.8);box-shadow:0 18px 40px -20px rgba(0,0,0,.9);color:#f4ede2;font:600 17px/1 var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);letter-spacing:.015em;cursor:pointer;transition:transform 140ms cubic-bezier(.23,1,.32,1),background-color .35s ease,border-color .35s ease}.ds-resume:hover{background:rgba(28,28,30,.86);border-color:rgba(236,226,210,.7)}.ds-resume:focus-visible{outline:1.5px solid var(--pearl,#f0e6d6);outline-offset:4px}.ds-resume:active{transform:scale(.97)}"
     },
     {
-      "name": "Иконка-кнопка",
+      "name": "Кнопки плеера",
       "kind": "button",
       "refersTo": "icon-button",
-      "description": "Контролы плеера 44 × 44: pale в покое, silver при hover и во включённом состоянии.",
-      "html": "<div class=\"ds-wall-c\"><button class=\"ds-ibtn\" aria-label=\"Пауза\"><svg class=\"ds-icon\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z\"/></svg></button><button class=\"ds-ibtn\" aria-label=\"Субтитры\" aria-pressed=\"true\"><svg class=\"ds-icon\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M224,50H32A14,14,0,0,0,18,64V192a14,14,0,0,0,14,14H224a14,14,0,0,0,14-14V64A14,14,0,0,0,224,50Zm2,142a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H224a2,2,0,0,1,2,2ZM50,136a6,6,0,0,1,6-6H72a6,6,0,0,1,0,12H56A6,6,0,0,1,50,136Zm156,0a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12h96A6,6,0,0,1,206,136Zm-48,32a6,6,0,0,1-6,6H56a6,6,0,0,1,0-12h96A6,6,0,0,1,158,168Zm48,0a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h16A6,6,0,0,1,206,168Z\"/></svg></button></div>",
-      "css": ".ds-wall-c{display:flex;gap:2px;background:var(--ink,#0e1013);padding:16px}.ds-ibtn{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:var(--radius,4px);background:transparent;color:var(--pale,#c9cfd5);cursor:pointer;transition:transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),color 160ms ease,background-color 160ms ease}.ds-icon{width:24px;height:24px;fill:currentColor}.ds-ibtn:hover{color:var(--silver,#e8ebee);background:rgba(232,235,238,.08)}.ds-ibtn[aria-pressed=\"true\"]{color:var(--silver,#e8ebee);background:rgba(232,235,238,.1)}.ds-ibtn:focus-visible{outline:2px solid var(--silver,#e8ebee);outline-offset:3px}.ds-ibtn:active{transform:scale(.94)}"
+      "description": "Прозрачные 44 × 44, пепельное серебро; нажатая (субтитры) — лёгкая серебряная подложка.",
+      "html": "<div class=\"ds-bar-c\"><button class=\"ds-ibtn\" aria-label=\"Играть\"><svg viewBox=\"0 0 256 256\" width=\"24\" height=\"24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z\"/></svg></button><button class=\"ds-ibtn\" aria-label=\"Назад на 10 секунд\"><svg viewBox=\"0 0 256 256\" width=\"24\" height=\"24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M222,128a94,94,0,0,1-92.74,94H128a93.43,93.43,0,0,1-64.5-25.65,6,6,0,1,1,8.24-8.72A82,82,0,1,0,70,70l-.19.19L39.44,98H72a6,6,0,0,1,0,12H24a6,6,0,0,1-6-6V56a6,6,0,0,1,12,0V90.34L61.63,61.4A94,94,0,0,1,222,128Z\"/></svg></button><span class=\"ds-time-c\">12:04 <span>/ 1:52:10</span></span><button class=\"ds-ibtn\" aria-pressed=\"true\" aria-label=\"Субтитры\"><svg viewBox=\"0 0 256 256\" width=\"24\" height=\"24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,50H32A14,14,0,0,0,18,64V192a14,14,0,0,0,14,14H224a14,14,0,0,0,14-14V64A14,14,0,0,0,224,50Zm2,142a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H224a2,2,0,0,1,2,2ZM50,136a6,6,0,0,1,6-6H72a6,6,0,0,1,0,12H56A6,6,0,0,1,50,136Zm156,0a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12h96A6,6,0,0,1,206,136Zm-48,32a6,6,0,0,1-6,6H56a6,6,0,0,1,0-12h96A6,6,0,0,1,158,168Zm48,0a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h16A6,6,0,0,1,206,168Z\"/></svg></button><button class=\"ds-ibtn\" aria-label=\"Во весь экран\"><svg viewBox=\"0 0 256 256\" width=\"24\" height=\"24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M214,48V88a6,6,0,0,1-12,0V54H168a6,6,0,0,1,0-12h40A6,6,0,0,1,214,48ZM88,202H54V168a6,6,0,0,0-12,0v40a6,6,0,0,0,6,6H88a6,6,0,0,0,0-12Zm120-40a6,6,0,0,0-6,6v34H168a6,6,0,0,0,0,12h40a6,6,0,0,0,6-6V168A6,6,0,0,0,208,162ZM88,42H48a6,6,0,0,0-6,6V88a6,6,0,0,0,12,0V54H88a6,6,0,0,0,0-12Z\"/></svg></button></div>",
+      "css": ".ds-bar-c{display:flex;align-items:center;gap:2px;padding:18px 16px;background:linear-gradient(to top,rgba(10,11,13,.9),rgba(10,11,13,.62) 45%,rgba(10,11,13,.3)),#2a2b2e;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif)}.ds-ibtn{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:var(--radius,3px);background:transparent;color:var(--ink-2,#c9c7c3);cursor:pointer;transition:transform 140ms cubic-bezier(.23,1,.32,1),color 160ms ease,background-color 160ms ease}.ds-ibtn:hover{color:var(--ink,#eeebe5);background:rgba(228,226,222,.08)}.ds-ibtn:focus-visible{outline:1.5px solid var(--pearl,#f0e6d6);outline-offset:4px}.ds-ibtn:active{transform:scale(.94)}.ds-ibtn[aria-pressed=\"true\"]{color:var(--ink,#eeebe5);background:rgba(228,226,222,.1)}.ds-time-c{margin:0 10px;color:var(--ink-2,#c9c7c3);font-size:.9375rem;font-variant-numeric:tabular-nums;white-space:nowrap}.ds-time-c span{color:var(--ink-3,#b0b0b0)}"
     },
     {
-      "name": "Поле ввода",
+      "name": "Поле входа",
       "kind": "input",
       "refersTo": "input",
-      "description": "Подпись mist над полем; в фокусе рамка становится серебряной, при ошибке — danger.",
-      "html": "<div class=\"ds-wall-d\"><label class=\"ds-field\"><span class=\"ds-field-label\">Логин</span><input class=\"ds-input\" value=\"anna\"></label><label class=\"ds-field\"><span class=\"ds-field-label\">Пароль</span><input class=\"ds-input\" type=\"password\" aria-invalid=\"true\" value=\"secret\"></label><p class=\"ds-error\">Логин или пароль не подходят. Проверьте раскладку и Caps Lock.</p></div>",
-      "css": ".ds-wall-d{background:var(--night,#14171b);padding:24px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif);color:var(--pale,#c9cfd5)}.ds-wall-d{display:grid;gap:18px;max-width:360px}.ds-field{display:grid;gap:8px}.ds-field-label{font-size:.9375rem;color:var(--mist,#9ea6ae)}.ds-input{width:100%;box-sizing:border-box;height:50px;padding:0 14px;border:1px solid var(--line,#646c75);border-radius:var(--radius,4px);background:rgba(16,19,22,.78);color:var(--silver,#e8ebee);caret-color:var(--silver,#e8ebee);font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif);font-size:1.0625rem;transition:border-color 160ms ease,background-color 160ms ease}.ds-input:focus{outline:none;border-color:var(--silver,#e8ebee);background:rgba(16,19,22,.92)}.ds-input[aria-invalid=\"true\"]{border-color:var(--danger,#ebb8b0)}.ds-error{margin:-4px 0 0;color:var(--danger,#ebb8b0);font-size:.9375rem;line-height:1.4}"
+      "description": "Тёмное стекло с тёплой рамкой; фокус — жемчужная рамка и мягкое кольцо; ошибка — приглушённая тревога.",
+      "html": "<div class=\"ds-sky-d\"><label class=\"ds-field\"><span>Логин</span><input class=\"ds-input\" value=\"anya\"></label><label class=\"ds-field\"><span>Пароль</span><input class=\"ds-input\" type=\"password\" value=\"secret\" aria-invalid=\"true\"></label><p class=\"ds-err\">Логин или пароль не подходят. Проверьте раскладку и Caps Lock.</p></div>",
+      "css": ".ds-sky-d{background:linear-gradient(to bottom,#131417,#16171a 60%,#1f1e1d);padding:28px;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);color:var(--ink,#eeebe5);text-shadow:0 1px 14px rgba(10,11,13,.5);display:grid;gap:18px;max-width:360px}.ds-field{display:grid;gap:8px}.ds-field span{color:var(--ink-3,#b0b0b0);font-size:14px;font-weight:500;letter-spacing:.01em}.ds-input{width:100%;box-sizing:border-box;height:50px;padding:0 14px;border:1px solid rgba(226,218,206,.3);border-radius:var(--radius,3px);background:rgba(14,15,18,.7);color:var(--ink,#eeebe5);font:400 1.0625rem/1.5 var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);caret-color:var(--pearl,#f0e6d6);text-shadow:none;transition:border-color .25s ease,background-color .25s ease,box-shadow .25s ease}.ds-input:focus{outline:none;border-color:rgba(240,230,214,.75);background:rgba(14,15,18,.86);box-shadow:0 0 0 3px rgba(240,230,214,.1)}.ds-input[aria-invalid=\"true\"]{border-color:var(--danger,#e4b4a8)}.ds-err{margin:-4px 0 0;color:var(--danger,#e4b4a8);font-size:15px;line-height:1.4}"
     },
     {
-      "name": "Верхняя строка лобби",
-      "kind": "nav",
-      "refersTo": "link",
-      "description": "Название слева, «Выйти» справа на градиентном затемнении; без плашки.",
-      "html": "<div class=\"ds-wall-e\"><header class=\"ds-top\"><p class=\"ds-wordmark\">Свет в окне</p><a class=\"ds-link\" href=\"#\"><svg class=\"ds-link-icon\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M118,216a6,6,0,0,1-6,6H48a6,6,0,0,1-6-6V40a6,6,0,0,1,6-6h64a6,6,0,0,1,0,12H54V210h58A6,6,0,0,1,118,216Zm110.24-92.24-40-40a6,6,0,0,0-8.48,8.48L209.51,122H112a6,6,0,0,0,0,12h97.51l-29.75,29.76a6,6,0,1,0,8.48,8.48l40-40A6,6,0,0,0,228.24,123.76Z\"/></svg>Выйти</a></header></div>",
-      "css": ".ds-wall-e{background:#3d444c}.ds-top{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 28px;background:linear-gradient(to bottom,rgba(12,14,17,.6),rgba(12,14,17,0));font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-wordmark{margin:0;font-size:1.1875rem;font-weight:400;letter-spacing:-.005em;color:var(--silver,#e8ebee)}.ds-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--mist,#9ea6ae);text-decoration:none;font-size:.9375rem;transition:color 160ms ease}.ds-link-icon{width:20px;height:20px;fill:currentColor}.ds-link:hover{color:var(--silver,#e8ebee)}.ds-link:focus-visible{outline:2px solid var(--silver,#e8ebee);outline-offset:3px}"
+      "name": "Строка присутствия",
+      "kind": "chip",
+      "refersTo": "presence-line",
+      "description": "Огонёк и строка над названием фильма: жемчуг, когда второй здесь; пустое кольцо и серебро, когда нет.",
+      "html": "<div class=\"ds-sky-e\"><p class=\"ds-here\"><span class=\"ds-lamp-e\"></span>boris здесь.</p><p class=\"ds-here\" data-lit=\"false\"><span class=\"ds-lamp-e\"></span>boris пока не в сети. Кто придёт позже, попадёт на ту же секунду.</p></div>",
+      "css": ".ds-sky-e{background:linear-gradient(to bottom,#131417,#16171a 60%,#1f1e1d);padding:28px;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);color:var(--ink,#eeebe5);text-shadow:0 1px 14px rgba(10,11,13,.5)}.ds-here{display:flex;align-items:flex-start;gap:11px;margin:0 0 14px;color:var(--pearl,#f0e6d6);font-size:15px;font-weight:500;line-height:1.35;letter-spacing:.005em;transition:color .8s ease}.ds-here[data-lit=\"false\"]{color:var(--ink-2,#c9c7c3);font-weight:400}.ds-here .ds-lamp-e{margin-top:calc(.675em - 4.5px)}.ds-lamp-e{position:relative;display:inline-block;width:9px;height:9px;flex:none}.ds-lamp-e::before,.ds-lamp-e::after{content:'';position:absolute;border-radius:50%}.ds-lamp-e::before{inset:2.5px;background:var(--pearl-core,#fff6ea);transition:inset .8s cubic-bezier(.23,1,.32,1),background-color .8s ease,box-shadow .8s ease}.ds-lamp-e::after{inset:-7px;background:radial-gradient(closest-side,rgba(240,230,214,.6),rgba(240,230,214,.17) 55%,rgba(240,230,214,0));animation:ds-breathe 5.6s cubic-bezier(.45,0,.55,1) infinite;transition:transform .8s cubic-bezier(.23,1,.32,1)}@keyframes ds-breathe{0%,100%{opacity:.35;scale:.82}50%{opacity:1;scale:1}}@media (prefers-reduced-motion: reduce){.ds-lamp-e::after{animation:none;opacity:.85}}.ds-here[data-lit=\"false\"] .ds-lamp-e::before{inset:1.5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(201,199,195,.72)}.ds-here[data-lit=\"false\"] .ds-lamp-e::after{transform:scale(0)}"
     },
     {
-      "name": "Окно присутствия",
+      "name": "Подпись звезды",
       "kind": "custom",
-      "refersTo": "presence-pane",
-      "description": "Знак системы: окно «Т» горит glow, когда человек в сети; без сети строка уходит в fog.",
-      "html": "<div class=\"ds-wall-f\"><ul class=\"ds-presence\"><li class=\"ds-on\"><svg class=\"ds-pane\" viewBox=\"0 0 14 20\" aria-hidden=\"true\"><rect class=\"ds-pane-frame\" x=\".6\" y=\".6\" width=\"12.8\" height=\"16.8\" rx=\".6\"/><rect class=\"ds-pane-glass\" x=\"2.2\" y=\"2.2\" width=\"9.6\" height=\"13.6\"/><path class=\"ds-pane-mull\" d=\"M7 15.8V6.5M2.2 6.5h9.6\"/><path class=\"ds-pane-sill\" d=\"M0 19h14\"/></svg>anna (вы)</li><li class=\"ds-on\"><svg class=\"ds-pane\" viewBox=\"0 0 14 20\" aria-hidden=\"true\"><rect class=\"ds-pane-frame\" x=\".6\" y=\".6\" width=\"12.8\" height=\"16.8\" rx=\".6\"/><rect class=\"ds-pane-glass\" x=\"2.2\" y=\"2.2\" width=\"9.6\" height=\"13.6\"/><path class=\"ds-pane-mull\" d=\"M7 15.8V6.5M2.2 6.5h9.6\"/><path class=\"ds-pane-sill\" d=\"M0 19h14\"/></svg>boris, догружается</li><li class=\"ds-off\"><svg class=\"ds-pane\" viewBox=\"0 0 14 20\" aria-hidden=\"true\"><rect class=\"ds-pane-frame\" x=\".6\" y=\".6\" width=\"12.8\" height=\"16.8\" rx=\".6\"/><rect class=\"ds-pane-glass\" x=\"2.2\" y=\"2.2\" width=\"9.6\" height=\"13.6\"/><path class=\"ds-pane-mull\" d=\"M7 15.8V6.5M2.2 6.5h9.6\"/><path class=\"ds-pane-sill\" d=\"M0 19h14\"/></svg>vera, не в сети</li></ul></div>",
-      "css": ".ds-wall-f{background:var(--ink,#0e1013);padding:16px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-presence{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0;padding:0;list-style:none;color:var(--pale,#c9cfd5);font-size:.875rem}.ds-presence li{display:flex;align-items:center;gap:7px;white-space:nowrap;transition:color 400ms ease}.ds-presence li.ds-off{color:var(--fog,#868e97)}.ds-pane{width:14px;height:20px;flex:none;overflow:visible}.ds-pane-frame{fill:none;stroke:currentColor;stroke-width:1.2}.ds-pane-sill{stroke:currentColor;stroke-width:1.4}.ds-pane-mull{fill:none;stroke:currentColor;stroke-width:1;transition:stroke 600ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1))}.ds-pane-glass{fill:var(--glow,#dfe7ee);opacity:0;transition:opacity 600ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1))}.ds-on .ds-pane-glass{opacity:1}.ds-on .ds-pane-mull{stroke:var(--ink,#0e1013)}.ds-on .ds-pane{filter:drop-shadow(0 0 5px rgba(223,231,238,.55))}"
+      "refersTo": "star-label",
+      "description": "Голос звёздного атласа у крайней звезды Пояса: имя, курсивом звезда и байеровская буква, тонкая выноска.",
+      "html": "<div class=\"ds-gap-f\"><span class=\"ds-star-f\"></span><span class=\"ds-lead-f\"></span><div class=\"ds-mark-f\"><span class=\"ds-nm\">anya<span class=\"ds-you\"> (вы)</span></span><span class=\"ds-sub\">Минтака, <i>δ</i> Ориона</span></div></div>",
+      "css": ".ds-gap-f{position:relative;height:120px;background:radial-gradient(60% 70% at 30% 55%,#0c0d10,#1a1b1e 70%,#26272a);font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);overflow:hidden}.ds-star-f{position:absolute;left:60px;top:66px;width:3px;height:3px;border-radius:50%;background:#fff9f0;box-shadow:0 0 6px 2px rgba(255,240,220,.5),0 0 22px 8px rgba(240,230,214,.18)}.ds-lead-f{position:absolute;left:76px;top:67px;width:32px;height:1px;background:rgba(220,214,204,.32)}.ds-mark-f{position:absolute;left:116px;top:48px;line-height:1.2;white-space:nowrap;text-shadow:0 1px 12px rgba(10,11,13,.9),0 0 2px rgba(10,11,13,.6);animation:ds-mark-in 1.4s ease .2s both}.ds-nm{display:block;font-size:15px;font-weight:500;color:#f2ebdf;letter-spacing:.005em}.ds-you{font-weight:400;color:var(--ink-2,#c9c7c3)}.ds-sub{display:block;margin-top:3px;font-size:13px;font-style:italic;color:var(--ink-3,#b0b0b0);letter-spacing:.005em}.ds-sub i{font-style:normal;font-weight:500}@keyframes ds-mark-in{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.ds-mark-f{animation:none}}"
     },
     {
-      "name": "Плашки событий",
-      "kind": "custom",
+      "name": "Тост общего события",
+      "kind": "card",
       "refersTo": "toast",
-      "description": "Тост — разовое общее событие «{кто}: {что}»; notice — длящееся состояние с рамкой серебра 14 %.",
-      "html": "<div class=\"ds-wall-g\"><p class=\"ds-toast\">boris: пауза</p><p class=\"ds-notice\">boris: догружается, ждём. Нажмите «Продолжить», чтобы не ждать.</p></div>",
-      "css": ".ds-wall-g{display:grid;justify-items:center;gap:24px;background:var(--ink,#0e1013);padding:28px 16px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-toast,.ds-notice{margin:0;max-width:min(560px,calc(100% - 32px));padding:10px 16px;border-radius:var(--radius,4px);background:rgba(12,14,17,.86);box-shadow:0 8px 28px rgba(0,0,0,.35);color:var(--silver,#e8ebee);font-size:.9375rem;line-height:1.4;text-align:center}.ds-toast{animation:ds-toast-in 220ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both}.ds-notice{border:1px solid rgba(232,235,238,.14)}@keyframes ds-toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}@keyframes ds-fade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.ds-toast{animation:ds-fade 160ms ease both}}"
+      "description": "Одна и та же карточка у обоих: «boris: пауза», «boris: в сети»; 3.8 с.",
+      "html": "<div class=\"ds-frame-g\"><p class=\"ds-toast\">boris: перемотка на 1:02:14</p></div>",
+      "css": ".ds-frame-g{background:linear-gradient(135deg,#3a3633,#1b1c1f);padding:40px 16px;display:flex;justify-content:center;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif)}.ds-toast{margin:0;max-width:min(560px,100%);padding:10px 16px;border:1px solid var(--hair,rgba(226,218,206,.22));border-radius:var(--radius,3px);background:rgba(16,17,20,.88);box-shadow:0 10px 30px -10px rgba(0,0,0,.6);color:var(--ink,#eeebe5);font-size:.9375rem;line-height:1.4;text-align:center;font-variant-numeric:tabular-nums;animation:ds-toast-in 220ms cubic-bezier(.23,1,.32,1) both}@keyframes ds-toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion: reduce){.ds-toast{animation:none}}"
     },
     {
       "name": "Линия времени",
       "kind": "custom",
-      "refersTo": "timeline-played",
-      "description": "Пройденная часть — единственная серебряная заливка в плеере; дорожка утолщается при наведении и фокусе.",
-      "html": "<div class=\"ds-wall-h\"><div class=\"ds-timeline\" tabindex=\"0\" aria-label=\"Перемотка у обоих\"><div class=\"ds-track\"><div class=\"ds-buffered\"></div><div class=\"ds-played\"></div></div><div class=\"ds-thumb\"></div><div class=\"ds-tip\">12:30</div></div></div>",
-      "css": ".ds-wall-h{background:var(--ink,#0e1013);padding:44px 22px 16px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-timeline{position:relative;height:28px;display:flex;align-items:center;cursor:pointer;outline:none}.ds-track{position:absolute;left:0;right:0;height:5px;border-radius:3px;background:rgba(232,235,238,.2);overflow:hidden;transform:scaleY(.6);transition:transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1))}.ds-buffered,.ds-played{position:absolute;top:0;bottom:0;left:0}.ds-buffered{width:62%;background:rgba(232,235,238,.3)}.ds-played{width:38%;background:var(--silver,#e8ebee)}.ds-thumb{position:absolute;left:38%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--silver,#e8ebee);box-shadow:0 1px 6px rgba(0,0,0,.5);opacity:0;transition:opacity 140ms ease}.ds-tip{position:absolute;bottom:30px;left:38%;padding:4px 8px;border-radius:var(--radius,4px);background:rgba(16,19,22,.92);color:var(--silver,#e8ebee);font-size:.8125rem;font-variant-numeric:tabular-nums;opacity:0;transform:translateX(-50%);transition:opacity 120ms ease}.ds-timeline:hover .ds-track,.ds-timeline:focus-visible .ds-track{transform:scaleY(1)}.ds-timeline:hover .ds-thumb,.ds-timeline:focus-visible .ds-thumb,.ds-timeline:hover .ds-tip{opacity:1}.ds-timeline:focus-visible .ds-track{outline:2px solid var(--silver,#e8ebee);outline-offset:4px}"
+      "refersTo": "timeline-track",
+      "description": "Дорожка 5px, в покое сжата до 0.6; при наведении раскрывается, появляются бегунок и подсказка времени.",
+      "html": "<div class=\"ds-frame-h\"><div class=\"ds-tl\" tabindex=\"0\" aria-label=\"Перемотка у обоих\"><div class=\"ds-track\"><div class=\"ds-buf\"></div><div class=\"ds-played\"></div></div><span class=\"ds-thumb\"></span><span class=\"ds-tip\">41:20</span></div></div>",
+      "css": ".ds-frame-h{padding:44px 22px 18px;background:linear-gradient(to top,rgba(10,11,13,.9),rgba(10,11,13,.4)),#2a2b2e;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif)}.ds-tl{position:relative;height:28px;display:flex;align-items:center;cursor:pointer;outline:none}.ds-track{position:absolute;left:0;right:0;height:5px;border-radius:3px;background:rgba(228,226,222,.18);overflow:hidden;transform:scaleY(.6);transition:transform 140ms cubic-bezier(.23,1,.32,1)}.ds-buf,.ds-played{position:absolute;top:0;bottom:0;left:0}.ds-buf{width:58%;background:rgba(228,226,222,.28)}.ds-played{width:37%;background:var(--silver,#e4e2de)}.ds-thumb{position:absolute;left:37%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--silver,#e4e2de);box-shadow:0 1px 6px rgba(0,0,0,.5);opacity:0;transition:opacity 140ms ease}.ds-tip{position:absolute;bottom:30px;left:37%;padding:4px 8px;border:1px solid var(--hair,rgba(226,218,206,.22));border-radius:var(--radius,3px);background:rgba(16,17,20,.94);color:var(--ink,#eeebe5);font-size:.8125rem;font-variant-numeric:tabular-nums;transform:translateX(-50%);opacity:0;transition:opacity 120ms ease}.ds-tl:hover .ds-track,.ds-tl:focus-visible .ds-track{transform:scaleY(1)}.ds-tl:hover .ds-thumb,.ds-tl:hover .ds-tip,.ds-tl:focus-visible .ds-thumb{opacity:1}.ds-tl:focus-visible .ds-track{outline:1.5px solid var(--pearl,#f0e6d6);outline-offset:4px}"
     },
     {
       "name": "Общий отсчёт",
       "kind": "custom",
       "refersTo": "countdown",
-      "description": "Старт с начала у обоих: тонкая цифра 200 и подпись на затемнении 0.5 поверх «тумана зала».",
-      "html": "<div class=\"ds-wall-i\"><div class=\"ds-countdown\"><span class=\"ds-count-num\">3</span><span class=\"ds-count-note\">Фильм начинается у обоих</span></div></div>",
-      "css": ".ds-wall-i{background:radial-gradient(120% 90% at 62% 30%,#59616a 0%,#2b3036 45%,var(--night,#14171b) 100%);font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-countdown{display:grid;place-content:center;justify-items:center;gap:6px;min-height:260px;background:rgba(12,14,17,.5)}.ds-count-num{font-size:clamp(5rem,15vw,9rem);font-weight:200;line-height:1;color:var(--silver,#e8ebee);font-variant-numeric:tabular-nums;animation:ds-digit 320ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both}.ds-count-note{color:var(--pale,#c9cfd5);font-size:1rem}@keyframes ds-digit{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){.ds-count-num{animation:none}}"
+      "description": "Крупные тонкие цифры 3-2-1 на затемнении, у обоих одновременно.",
+      "html": "<div class=\"ds-count\"><span class=\"ds-num\">3</span><span class=\"ds-cnote\">Фильм начинается у обоих</span></div>",
+      "css": ".ds-count{display:grid;place-content:center;justify-items:center;gap:10px;min-height:260px;background:linear-gradient(rgba(10,11,13,.5),rgba(10,11,13,.5)),linear-gradient(to bottom,#131417,#121316 45%,#19191a 78%,#242220);font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif)}.ds-num{color:var(--ink,#eeebe5);font-size:clamp(6rem,18vw,11rem);font-weight:200;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(240,230,214,.18);animation:ds-digit 320ms cubic-bezier(.23,1,.32,1) both}.ds-cnote{color:var(--ink-2,#c9c7c3);font-size:17px}@keyframes ds-digit{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}@media (prefers-reduced-motion: reduce){.ds-num{animation:none}}"
     },
     {
-      "name": "Субтитры",
-      "kind": "custom",
-      "refersTo": "subtitle-plate",
-      "description": "Строки на тёмных плашках 3 px по центру; поднимаются над контролами, когда те видны.",
-      "html": "<div class=\"ds-wall-j\"><div class=\"ds-subs\"><span>Ты здесь одна?</span></div></div>",
-      "css": ".ds-wall-j{background:linear-gradient(#c3c9cf,#98a1a9);padding:80px 16px 24px;font-family:var(--font, 'Ysabeau Office', system-ui, sans-serif)}.ds-subs{display:grid;justify-items:center;gap:4px;text-align:center}.ds-subs span{padding:2px 10px;border-radius:3px;background:rgba(10,12,14,.66);color:var(--silver,#e8ebee);font-size:clamp(1.125rem,2.5vw,1.875rem);line-height:1.32;white-space:pre-line;text-wrap:balance}"
+      "name": "«Выйти»",
+      "kind": "nav",
+      "refersTo": "link-out",
+      "description": "Единственная навигация: тихая текстовая ссылка вверху справа, зона нажатия 44px.",
+      "html": "<div class=\"ds-sky-j\"><a class=\"ds-out\" href=\"#\">Выйти</a></div>",
+      "css": ".ds-sky-j{background:linear-gradient(to bottom,#131417,#16171a 60%,#1f1e1d);padding:28px;font-family:var(--font, 'Ysabeau Office', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);color:var(--ink,#eeebe5);text-shadow:0 1px 14px rgba(10,11,13,.5);display:flex;justify-content:flex-end;padding:14px 18px}.ds-out{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--ink-2,#c9c7c3);font-size:15px;font-weight:450;line-height:1;text-decoration:none;text-shadow:0 1px 10px rgba(10,11,13,.7);transition:color .25s ease}.ds-out:hover{color:var(--ink,#eeebe5)}.ds-out:focus-visible{outline:1.5px solid var(--pearl,#f0e6d6);outline-offset:0;border-radius:2px}"
     }
   ],
   "narrative": {
-    "northStar": "Окна напротив",
-    "overview": "Каждый экран до фильма — вид снизу вверх в петербургский двор-колодец в тумане. Войти — значит зажечь своё окно на левой стене; второй зритель — окно напротив, которое горит, пока он здесь. «Смотреть» раскрывает фильм из прямоугольника своего окна. Система не изображает кинотеатр: в ней нет витрины постеров, красной кнопки и «тёмного стриминга». Её материал — холодные серые от графита до туманного неба, одно серебро и свет в окнах.\n\nПлотность низкая. Один столбец текста стоит на тёмной стене слева внизу, на экране одна главная кнопка, остальное занимает сцена. Во время просмотра интерфейс уходит в тень: фильм занимает весь экран, контролы проявляются за 150 мс и гаснут за 450 мс. Глубину создают туман, градиентные затемнения и свет. Карточек, стекла и крупных теней нет.\n\nПодтверждённые отказы (направление «Окна напротив» и решения совета 2026-10-06): витрина постеров, красная кнопка play, стандартный «тёмный стриминг», карточки, стекло (`backdrop-filter`), подсветка интерфейса светом кадра.",
+    "northStar": "Просвет",
+    "overview": "Каждый экран до фильма — взгляд из своего окна вверх, в низкое серое петербургское небо. Гряда облаков почти сплошная, и только в одном месте она разошлась: в просвете ярко горят три звезды Пояса Ориона. Две крайние — это вы двое: смотрящий всегда Минтака, второй человек — Альнитак, Альнилам посередине — общий фильм. Звезда человека теплеет и дышит, пока он здесь; когда второй приходит, просвет раскрывается шире, а его дыхание за пару секунд попадает в такт с вашим. «Смотреть» раскрывает фильм кругом из вашей собственной звезды. Пояс выбран не как украшение: он лежит на небесном экваторе и восходит над обоими городами.\n\nЭто сцена, а не витрина. Ни постеров, ни звёздных обоев с неоном, ни туманностей, ни названия и слогана на экране: слово «Смотрильня» живёт только во вкладке, на иконке и в Media Session. Плотность низкая: одна колонка текста слева внизу стоит на тёмной облачной массе, на экране одна главная кнопка, всё остальное — небо и полоса крыш. Материал — графит, тёплый серый у города и серебро; тепло в системе одно, жемчужное, и оно принадлежит людям. Уют — в деталях, которые не требуют внимания: дымок из трубы, сносимый тем же ветром, что и облака, слуховое окно под вашей звездой, светящееся в её ритме, запотевшие нижние углы стекла и капля, которая раз в 25 секунд стекает короткими рывками.\n\nВо время фильма интерфейс уходит в тень: кадр на весь экран, контролы проявляются за 150 мс и гаснут за 450 мс, а небо целиком засыпает: сцена скрыта, её рендер остановлен.\n\nПодтверждённые отказы (направление «Просвет», выбор пользователя): витрина постеров, звёздные обои с неоном и насыщенный «космос», название и слоган на экранах, романтика словами вместо света и движения, громкие пасхалки.",
     "keyCharacteristics": [
-      "За входом и лобби — процедурный двор на canvas, его настроение меняется по времени суток.",
-      "Холодная шкала серых (оттенок ≈ 244–258° в OKLCH, хрома ≤ 0.02). Единственный тёплый тон — `danger`, он только для ошибок.",
-      "Серебро — у одной активной кромки за раз.",
-      "Окно с переплётом «Т» — единственный знак системы: присутствие, иконка вкладки, сцена, переход.",
-      "Одна гарнитура, Ysabeau Office: чем крупнее кегль, тем тоньше начертание.",
-      "Маленькие радиусы (`base`, `plate`), никаких пилюль, карточек и стекла.",
-      "Движение — это разгорание света и раскрытие окна. Каждое движение можно прервать, и у каждого есть вариант для `prefers-reduced-motion`."
+      "Пасмурное небо на WebGL: слоисто-кучевая гряда с лунными кромками и тёплым подсветом города снизу, рваный просвет вдоль Пояса.",
+      "Настоящие звёзды из Йельского каталога ярких звёзд в истинном положении (север вверху, прямое восхождение растёт влево).",
+      "Двое — крайние звёзды Пояса, фильм — средняя; присутствие выражено только светом: теплом, дыханием, шириной просвета.",
+      "Один шрифт (Ysabeau Office, прямой и курсив); курсив — голос звёздного атласа.",
+      "Серебро для текста и рамок, жемчуг только для присутствия, никаких плашек под текстом на небе.",
+      "Петербургские крыши у нижнего края: цинк, трубы, шпиль, антенны, редкие тусклые окна."
     ],
     "rules": [
       {
-        "name": "The One Silver Edge Rule",
-        "body": "Сплошное серебро получает один элемент экрана, тот, что сейчас действует: главная кнопка во входе, лобби и престарте или пройденная часть линии времени в плеере. Ручки ползунков — часть своих линий. Рамка поля в фокусе и кольцо фокуса следуют за пользователем и в счёт не идут. Всё остальное серебро на экране — это текст или полупрозрачный волосок `rgba(232, 235, 238, α)`: 0.08 — hover иконки, 0.1 — нажатая иконка, 0.14 — рамка notice, 0.2 — дорожка, 0.24 — рамка «Продолжить», 0.3 — буфер.",
+        "name": "The One Warmth Rule (Правило одного тепла)",
+        "body": "Тёплый жемчуг — это человек: его присутствие (огонёк, звёзды двоих, ореол на их кромках, слуховое окно под своей звездой, вспышка входа, едва заметное свечение цифр общего отсчёта, когда оба вместе) и место, где сейчас его рука (фокус, каретка, выделение, поле в фокусе). Больше нигде. Кнопка несёт огонёк, потому что это ваш свет. Тусклые окна города — янтарь, а не жемчуг, и они неподвижны.",
         "section": "colors"
       },
       {
-        "name": "The Light Means Someone Rule",
-        "body": "Полный свет `glow` горит только там, где есть человек: его окно во дворе, окно присутствия, горящая иконка вкладки, вспышка входа в фильм. У соседских окон ореол примерно в 6 раз тусклее и в 2.3 раза меньше, стекло — на треть темнее, так что они никогда не спорят с окнами людей.",
+        "name": "The Almost-Silver Rule (Правило почти серебра)",
+        "body": "Цвет звезды — шёпот: оттенок по температуре из каталога смешан с серебром 22/78. Никаких синих, фиолетовых, бирюзовых, неоновых туманностей и градиентов «космоса».",
         "section": "colors"
       },
       {
-        "name": "The One Warm Tone Rule",
-        "body": "Холодная шкала не прерывается акцентным оттенком. Единственный тёплый цвет — `danger`, и он означает ошибку.",
+        "name": "The Lit-Is-Present Rule (Правило «горит — значит здесь»)",
+        "body": "Человек не в сети — звезда остаётся на небе, но холодная, огонёк превращается в пустое серебряное кольцо (1 px, rgba(201, 199, 195, 0.72)), подпись приглушена до 0.82. Тепло никогда не изображает что-то, кроме присутствия.",
         "section": "colors"
       },
       {
-        "name": "The Thinner When Larger Rule",
-        "body": "Чем крупнее кегль, тем легче начертание: отсчёт 200, название 300, фильм 400, текст 400, кнопка 600. Отрицательный трекинг только у крупных (−0.025em, −0.015em, −0.005em).",
+        "name": "The One Voice Rule (Правило одного голоса)",
+        "body": "Во всей системе один шрифт. Иерархию строят кегль, вес (200–600) и цвет серебра, а не второе семейство.",
         "section": "typography"
       },
       {
-        "name": "The Tabular Time Rule",
-        "body": "Во всём интерфейсе цифры `lining-nums`. Таймкоды, строка состояния, подсказка времени и отсчёт набраны `tabular-nums`, чтобы цифры не прыгали.",
+        "name": "The Atlas Voice Rule (Правило голоса атласа)",
+        "body": "Курсив принадлежит только подписи звезды — как в звёздном атласе. Байеровская буква в подписи всегда прямая. Нигде больше курсив не используется.",
         "section": "typography"
       },
       {
-        "name": "The Dark Wall Rule",
-        "body": "Текст живёт на тёмной стене слева внизу, небо остаётся пустым. Ни один элемент интерфейса, кроме подписей у окон и кнопки «Выйти», не стоит на правой верхней части двора.",
+        "name": "The Calm Corner Rule (Правило спокойного угла)",
+        "body": "Текст на небе стоит только в спокойной зоне шейдера: под ней гряда плотнее (непрозрачность 0.97), темнее на 28%, почти без лунного света, и звёзды сквозь неё не просвечивают. Зона задаётся в sky.js вместе с раскладкой; новый текстовый блок на небе требует расширить её там, а не подложить плашку.",
         "section": "layout"
       },
       {
-        "name": "The Fog, Not Glass Rule",
-        "body": "Глубина — это туман, затемнение и свет. Никакого `backdrop-filter`, карточек-контейнеров и теней под кнопками и полями. Тень бывает только у того, что плавает над видео.",
+        "name": "The Clear Belt Rule (Правило ясного Пояса)",
+        "body": "Пояс всегда хорошо виден и ярок: его никогда не перекрывает текст, вокруг каждой из трёх звёзд облака обязаны разойтись (у звезды просвет гарантирован шейдером), а Пояс рисуется на собственном холсте ровным светом, без мерцания.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Plate-On-Sky Rule (Правило без плашек на небе)",
+        "body": "На небе текст стоит без подложек. Плашки (полупрозрачный графит 0.78–0.94 с нитью) появляются только поверх кадра фильма или как поле ввода: тост, notice, время над линией, субтитры, поля.",
         "section": "elevation"
       },
       {
-        "name": "The T-Mullion Rule",
-        "body": "Окно рисуется везде одинаково: рама, стекло, перекладина на трети сверху, стойка вниз, подоконник. Других символов у системы нет. Функциональные иконки — Phosphor Light.",
+        "name": "The Real Sky Rule (Правило настоящего неба)",
+        "body": "Каждая звезда на экране — настоящая звезда из каталога в истинном положении. Ничего звездоподобного добавлять нельзя: капли на стекле держатся низко, на фоне городского зарева, и на телефоне их нет вовсе — чтобы их не приняли за звёзды.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Circle-Is-Light Rule (Правило круга)",
+        "body": "Круг — только у света. Кнопки, плашки и поля никогда не становятся «пилюлями» и кругами.",
         "section": "shapes"
       }
     ],
     "dos": [
-      "**Do** держать на экране одну сплошную серебряную заливку: главную кнопку во входе, лобби или престарте либо пройденную часть линии времени в плеере (The One Silver Edge Rule).",
-      "**Do** ставить текст и формы в левый нижний угол на тёмную стену с полем `gutter`, а правый верхний угол оставлять небу и окнам.",
-      "**Do** обозначать человека окном с переплётом «Т»: в сети стекло горит `glow` (600 мс `--ease-out`), без сети строка уходит в `fog`.",
-      "**Do** набирать разовое общее событие тостом «{кто}: {что}» (3.8 с), а длящееся состояние — notice, которая не гаснет вместе с контролами.",
-      "**Do** давать каждому движению вариант для `prefers-reduced-motion`: туман стоит, свет без мерцания и сразу на месте, нажатия без масштаба, раскрытие окна → растворение 220 мс.",
-      "**Do** сжимать нажатый элемент за 140 мс `--ease-out`: кнопку до 0.97, иконку до 0.94, «Продолжить» до 0.96.",
-      "**Do** делать зоны нажатия не меньше 44 × 44 px и учитывать `env(safe-area-inset-*)` у каждого края.",
-      "**Do** набирать время и счётчики `tabular-nums`, а крупный текст — более лёгким начертанием (The Thinner When Larger Rule).",
-      "**Do** брать функциональные иконки только из Phosphor Light через `<symbol>`, `fill: currentColor`.",
-      "**Do** объяснять сбои спокойно и по-человечески, называя, у кого что происходит и что можно нажать."
+      "Do держать Пояс ярким и чистым: три звезды в настоящем положении, вокруг каждой просвет, ни одной надписи поверх.",
+      "Do ставить смотрящего на Минтаку, второго — на Альнитак, фильм — на Альнилам, на всех экранах и в значке.",
+      "Do выражать присутствие только светом: тепло жемчуга, дыхание 5.6 с, ширина просвета, окно под своей звездой; смена состояния — 800 мс.",
+      "Do ставить текст на небе в спокойный угол шейдера с тенью --shade (0 1px 14px rgba(10, 11, 13, 0.5)) и расширять эту зону в sky.js, если текста стало больше.",
+      "Do давать одну главную кнопку на экран — графитовую плиту 54px с огоньком.",
+      "Do держать все прямоугольники на 3px, рамки — 1px тёплым серебром.",
+      "Do писать подписи звёзд голосом атласа: курсив, «Имя звезды, буква Ориона», буква прямая.",
+      "Do давать каждому движению вариант для reduced-motion: застывший кадр, ровный свет, растворение 220 мс.",
+      "Do останавливать рендер неба во время фильма и в скрытой вкладке, держать облака около 30 кадров в секунду на пониженном разрешении."
     ],
     "donts": [
-      "**Don't** ставить вторую серебряную заливку рядом с главной кнопкой; вторичные действия — ссылка или иконка-кнопка в `pale`/`mist`.",
-      "**Don't** вводить витрину постеров, красную кнопку play, карточки, стекло (`backdrop-filter`) и подсветку интерфейса светом кадра.",
-      "**Don't** добавлять второй акцентный оттенок; тёплый `danger` только для ошибок.",
-      "**Don't** использовать `#000` и `#fff` как поверхность или текст: самый тёмный — `ink`, самый светлый — `silver-hover`.",
-      "**Don't** скруглять элементы интерфейса больше чем на 4 px и делать пилюли; круг — только ручка ползунка.",
-      "**Don't** прятать контролы, пока фильм на паузе, идёт отсчёт, человек перематывает, плеер заблокирован, курсор над контролами или фокус внутри них.",
-      "**Don't** зажигать соседские окна ярче окон людей и не давать свету `glow` ничего, кроме присутствия человека.",
-      "**Don't** центрировать вход и лобби и класть текст на небо.",
-      "**Don't** заводить второй знак, логотип, аватары или точки «онлайн» вместо окна с переплётом «Т».",
-      "**Don't** ставить надзаголовки капсом с разрядкой: регистр в системе не меняется."
+      "Don't показывать название или слоган на экранах: «Смотрильня» — только вкладка, значок, манифест и Media Session.",
+      "Don't использовать жемчуг для того, что не является присутствием или фокусом: ни для акцентов, ссылок, иконок и заголовков, ни для украшений неба.",
+      "Don't добавлять выдуманные звёзды, блёстки, падающие звёзды и всё, что можно принять за звезду: каждая звезда здесь настоящая.",
+      "Don't красить небо в насыщенный «космос»: синие, фиолетовые, бирюзовые туманности, неон и звёздные обои.",
+      "Don't подкладывать под текст на небе карточки, стекло или backdrop-filter.",
+      "Don't заставлять Пояс мерцать или тускнеть: мерцают только четыре звезды поля.",
+      "Don't вводить второй шрифт или курсив вне подписи звезды.",
+      "Don't делать пасхалки громкими: дымок, окно, капля и шпиль должны замечаться не сразу, а не требовать внимания.",
+      "Don't говорить о романтике словами: на экране только то, что по делу."
     ]
   }
 }

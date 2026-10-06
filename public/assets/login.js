@@ -4,6 +4,7 @@
   const user = form.elements.user;
   const pass = form.elements.password;
   const submit = form.querySelector('[type=submit]');
+  const label = submit.querySelector('.lbl');
   const err = document.getElementById('err');
   const reveal = document.getElementById('reveal');
 
@@ -24,16 +25,16 @@
     const saved = localStorage.getItem('login');
     if (saved && !user.value) user.value = saved;
   } catch { /* приватный режим */ }
-  // на телефоне не открываем клавиатуру сразу поверх двора
+  // на телефоне не открываем клавиатуру сразу поверх неба
   if (matchMedia('(pointer: fine)').matches) (user.value ? pass : user).focus();
 
   form.addEventListener('submit', () => {
     try { localStorage.setItem('login', user.value.trim()); } catch { /* приватный режим */ }
     submit.disabled = true;
-    submit.textContent = 'Входим…';
+    label.textContent = 'Входим…';
   });
   // «Назад» из истории возвращает страницу как была — с выключенной кнопкой
-  addEventListener('pageshow', () => { submit.disabled = false; submit.textContent = 'Войти'; });
+  addEventListener('pageshow', () => { submit.disabled = false; label.textContent = 'Войти'; });
 
   reveal.addEventListener('click', () => {
     const show = pass.type === 'password';
@@ -43,7 +44,6 @@
     reveal.querySelector('use').setAttribute('href', show ? '#i-eye-off' : '#i-eye');
   });
 
-  if (window.Court) {
-    window.Court.mount({ base: document.querySelector('.scene-base'), lights: document.querySelector('.scene-lights') });
-  }
+  // то же небо, что в зале, только без подписей: Пояс горит сам по себе
+  if (window.Sky) window.Sky.mount({ root: document.querySelector('.scene') });
 })();

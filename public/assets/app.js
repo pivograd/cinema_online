@@ -30,14 +30,12 @@
   let videoReady = false;
   let videoError = false;
   let videoRetries = 0, retryTimer = 0;
-  let court = null;
+  let sky = null;
   let joinedAt = 0;
 
   const now = () => performance.now();
-  // окно с переплётом «Т» — знак присутствия; горит, когда человек в сети
-  const PANE = '<svg class="pane" viewBox="0 0 14 20" aria-hidden="true"><rect class="frame" x=".6" y=".6" width="12.8" height="16.8" rx=".6"/>'
-    + '<rect class="glass" x="2.2" y="2.2" width="9.6" height="13.6"/><path class="mull" d="M7 15.8V6.5M2.2 6.5h9.6"/>'
-    + '<path class="sill" d="M0 19h14"/></svg>';
+  // огонёк — знак присутствия: тёплый, когда человек в сети, пустое серебряное кольцо, когда нет
+  const LAMP = '<span class="lamp" aria-hidden="true"></span>';
   const others = () => everyone.filter((u) => u !== me);
   const fmt = (s) => {
     s = Math.max(0, Math.floor(s || 0));
@@ -461,7 +459,7 @@
       const on = u === me ? connected : online.has(u);
       const li = document.createElement('li');
       li.className = on ? 'on' : 'off';
-      li.innerHTML = PANE;
+      li.innerHTML = LAMP;
       const s = status[u] || {};
       let text = u === me ? `${u} (вы)` : u;
       if (u !== me && !on) text += ', не в сети';
@@ -469,8 +467,10 @@
       li.append(text);
       list.append(li);
     }
-    if (court) {
-      court.setPeople([me, ...others()].filter(Boolean).map((u) => ({
+    // огонёк у строки «boris здесь» в лобби
+    $('together').parentElement.dataset.lit = String(others().some((u) => online.has(u)));
+    if (sky) {
+      sky.setPeople([me, ...others()].filter(Boolean).map((u) => ({
         id: u,
         lit: u === me ? connected : online.has(u),
         watching: u !== me && online.has(u) && !!(status[u] && status[u].joined) && !!(last && last.playing),
@@ -479,19 +479,117 @@
     }
   }
 
+  // подписи у звёзд, как в звёздном атласе: имя и звезда; от звезды к подписи — тонкая выноска
+  const STARS = [['Минтака', 'δ'], ['Альнитак', 'ζ'], ['Бетельгейзе', 'α'], ['Ригель', 'β'], ['Беллатрикс', 'γ'], ['Саиф', 'κ']];
+  const marks = new Map(); // человек -> его подпись и выноска
+  function mark(u) {
+    let m = marks.get(u);
+    if (m) return m;
+    const el = document.createElement('div');
+    el.className = 'mark';
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    const sub = document.createElement('span');
+    sub.className = 'sub';
+    el.append(nm, sub);
+    const line = document.createElement('div');
+    line.className = 'lead';
+    $('labels').append(line, el);
+    m = { el, nm, sub, line, star: -1, text: '' };
+    marks.set(u, m);
+    // проявляются, когда уже стоят на месте
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.classList.add('shown'); line.classList.add('shown'); }));
+    return m;
+  }
   function placeLabels() {
-    const box = $('labels');
-    box.textContent = '';
-    for (const u of [me, ...others()].filter(Boolean)) {
-      const r = court.box(u);
-      if (!r) continue;
-      const el = document.createElement('span');
-      el.className = 'who-label' + ((u === me ? connected : online.has(u)) ? '' : ' off');
-      el.textContent = u === me ? `${u} (вы)` : u;
-      el.style.left = `${r.left + r.width / 2}px`;
-      el.style.top = `${r.top + r.height + 10}px`;
-      box.append(el);
-    }
+    if (!sky) return;
+    const people = [me, ...others()].filter(Boolean);
+    for (const [u, m] of marks) if (!people.includes(u)) { m.el.remove(); m.line.remove(); marks.delete(u); }
+    const f = sky.film();
+    const vw = innerWidth, vh = innerHeight, pad = 14;
+    const tall = vh > vw;
+    people.forEach((u, i) => {
+      const m = mark(u);
+      const on = u === me ? connected : online.has(u);
+      m.el.classList.toggle('off', !on);
+      m.line.classList.toggle('off', !on);
+      const tail = u === me ? ' (вы)' : on ? '' : ' · не в сети';
+      if (m.text !== u + tail) {
+        m.text = u + tail;
+        m.nm.textContent = u;
+        if (tail) {
+          const s = document.createElement('span');
+          s.className = 'you';
+          s.textContent = tail;
+          m.nm.append(s);
+        }
+      }
+      if (m.star !== i && STARS[i]) {
+        m.star = i;
+        const g = document.createElement('i');
+        g.textContent = STARS[i][1];
+        m.sub.textContent = '';
+        m.sub.append(`${STARS[i][0]}, `, g, ' Ориона');
+      }
+      const p = sky.point(u);
+      m.el.hidden = m.line.hidden = !p || !STARS[i];
+      if (m.el.hidden) return;
+      const w = m.el.offsetWidth, h = m.el.offsetHeight;
+      const r = p.r || 2;
+      let x, y, right = false, line = null;
+      if (i < 2 && f) {
+        const dx = p.x - f.x, dy = p.y - f.y, len = Math.hypot(dx, dy) || 1;
+        const ux = dx / len, uy = dy / len;
+        if (tall) {
+          // телефон стоя: выноска вертикально, подпись над верхней звездой и под нижней, текстом к середине
+          const sy = uy < 0 ? -1 : 1;
+          right = ux > 0;
+          line = [p.x, p.y + sy * (r + 12), p.x, p.y + sy * (r + 39)];
+          x = right ? p.x + 3 - w : p.x - 3;
+          y = sy < 0 ? p.y - r - 45 - h : p.y + r + 45;
+        } else {
+          // по линии Пояса наружу, от средней звезды
+          right = ux < 0;
+          line = [p.x + ux * (r + 14), p.y + uy * (r + 14), p.x + ux * (r + 46), p.y + uy * (r + 46)];
+          x = p.x + ux * (r + 54) - (right ? w : 0);
+          y = p.y + uy * (r + 54) - h / 2 + (uy < 0 ? -4 : 4);
+        }
+      } else {
+        x = p.x + r + 12;
+        y = p.y - h / 2;
+      }
+      x = Math.min(Math.max(pad, x), vw - w - pad);
+      y = Math.min(Math.max(pad, y), vh - h - pad);
+      // подпись налезла на «Выйти» (низкий экран лёжа): ставим её сбоку от звезды, к середине экрана
+      const out = document.querySelector('.out');
+      const o = out && out.offsetParent ? out.getBoundingClientRect() : null;
+      if (o && x < o.right + 8 && x + w > o.left - 8 && y < o.bottom + 4 && y + h > o.top - 4) {
+        const side = p.x > vw / 2 ? -1 : 1;
+        right = side < 0;
+        line = [p.x + side * (r + 10), p.y, p.x + side * (r + 30), p.y];
+        x = Math.min(Math.max(pad, side < 0 ? p.x - r - 36 - w : p.x + r + 36), vw - w - pad);
+        y = Math.min(Math.max(pad, p.y - h / 2), vh - h - pad);
+      }
+      m.el.classList.toggle('right', right);
+      m.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      m.line.hidden = !line;
+      if (line) {
+        const [x1, y1, x2, y2] = line;
+        m.line.style.width = `${Math.hypot(x2 - x1, y2 - y1).toFixed(1)}px`;
+        m.line.style.transform = `translate(${x1.toFixed(1)}px, ${y1.toFixed(1)}px) rotate(${Math.atan2(y2 - y1, x2 - x1).toFixed(4)}rad)`;
+      }
+    });
+  }
+
+  // название с годом: «I Swear (2025)» — год мельче и тише
+  function setTitle(el, text) {
+    const yr = / \((\d{4})\)$/.exec(text);
+    el.textContent = yr ? text.slice(0, yr.index) + ' ' : text;
+    if (!yr) return;
+    const s = document.createElement('span');
+    s.className = 'yr';
+    s.textContent = `(${yr[1]})`;
+    el.append(s);
   }
 
   function renderLobby() {
@@ -507,7 +605,8 @@
       return;
     }
     btn.hidden = false;
-    $('filmTitle').textContent = title(last.file);
+    setTitle($('filmTitle'), title(last.file));
+    setTitle($('preTitle'), title(last.file));
     btn.disabled = !videoReady || videoError;
     const pos = roomPosition();
     const watcher = others().find((u) => online.has(u) && status[u] && status[u].joined);
@@ -530,7 +629,7 @@
 
   function renderTab() {
     const here = others().filter((u) => online.has(u));
-    document.title = here.length ? `${here.join(', ')} здесь · Свет в окне` : 'Свет в окне';
+    document.title = here.length ? `${here.join(', ')} здесь · Смотрильня` : 'Смотрильня';
     $('favicon').href = here.length ? '/assets/icon-lit.svg' : '/assets/icon.svg';
   }
 
@@ -760,7 +859,7 @@
     if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: title(file),
-      artist: 'Свет в окне',
+      artist: 'Смотрильня',
       artwork: [{ src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' }],
     });
   }
@@ -777,7 +876,7 @@
     }
   }
 
-  // --- вход в зал: окно раскрывается в фильм ---
+  // --- вход в зал: фильм раскрывается из своей звезды ---
   $('joinBtn').addEventListener('click', () => {
     if (!last || !last.file || joined) return;
     joined = true;
@@ -796,65 +895,49 @@
   // easeInOutQuart — та же кривая, что cubic-bezier(0.77, 0, 0.175, 1)
   const easeInOut = (t) => (t < 0.5 ? 8 * t ** 4 : 1 - (-2 * t + 2) ** 4 / 2);
   function openStage() {
-    const q = court && court.quad(me);
+    const p = sky && sky.point(me);
     body.dataset.view = 'player';
     renderControls();
-    stage.classList.add('flying'); // контролы и надписи появятся, когда окно раскроется
+    stage.classList.add('flying'); // контролы и надписи появятся, когда круг раскроется
     const done = () => {
       stage.style.clipPath = '';
       stage.classList.remove('flying');
-      $('frameOverlay').setAttribute('hidden', ''); // у <svg> нет свойства hidden, только атрибут
       body.classList.add('scene-off');
-      if (court) court.stop();
+      if (sky) sky.stop();
       showChrome();
     };
-    if (reduceMotion.matches || !q) {
+    if (reduceMotion.matches || !p) {
       stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }).finished.then(done);
       return;
     }
     const vw = innerWidth, vh = innerHeight;
-    const corners = [[0, 0], [vw, 0], [vw, vh], [0, vh]];
-    // каждый угол окна летит в ближайший угол экрана, порядок обхода сохраняется
-    let perm = null, best = Infinity;
-    for (const dir of [1, -1]) {
-      for (let r = 0; r < 4; r++) {
-        const p = q.map((_, i) => (((r + dir * i) % 4) + 4) % 4);
-        const d = q.reduce((sum, pt, i) => sum + Math.hypot(pt[0] - corners[p[i]][0], pt[1] - corners[p[i]][1]), 0);
-        if (d < best) { best = d; perm = p; }
-      }
-    }
+    // круг растёт из своей звезды, пока не накроет самый дальний угол экрана
+    const far = Math.max(Math.hypot(p.x, p.y), Math.hypot(vw - p.x, p.y), Math.hypot(p.x, vh - p.y), Math.hypot(vw - p.x, vh - p.y)) + 2;
+    const r0 = Math.max(1.5, p.r || 2);
+    const at = `at ${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`;
     const scene = document.querySelector('.scene');
-    const c = q.reduce((a, p) => [a[0] + p[0] / 4, a[1] + p[1] / 4], [0, 0]);
-    scene.style.transformOrigin = `${c[0]}px ${c[1]}px`;
+    scene.style.transformOrigin = `${p.x}px ${p.y}px`;
+    const glowEl = $('stageGlow');
+    glowEl.style.setProperty('--sx', `${p.x}px`);
+    glowEl.style.setProperty('--sy', `${p.y}px`);
     const ease = 'cubic-bezier(0.77, 0, 0.175, 1)';
-    const fly = scene.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 760, easing: ease, fill: 'forwards' });
-    const glow = $('stageGlow').animate([{ opacity: 0.9 }, { opacity: 0.9, offset: 0.35 }, { opacity: 0 }], { duration: 1100, easing: 'ease-out' });
-    const overlay = $('frameOverlay');
-    overlay.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
-    overlay.removeAttribute('hidden');
-    const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    const pt = (p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
+    // небо чуть подаётся навстречу своей звезде
+    const fly = scene.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }], { duration: 800, easing: ease, fill: 'forwards' });
+    // жемчужная вспышка у звезды: свет разливается и уступает кадру
+    const glow = glowEl.animate([{ opacity: 1 }, { opacity: 0.85, offset: 0.4 }, { opacity: 0 }], { duration: 1000, easing: 'ease-out' });
+    // только clip-path: маска поверх играющего видео обрезает его по прямоугольнику, а не по кругу
+    const open = (t) => {
+      stage.style.clipPath = `circle(${(r0 + (far - r0) * easeInOut(t)).toFixed(1)}px ${at})`;
+    };
     let t0 = 0, skipped = false;
     const step = (ts) => {
       if (!t0) t0 = ts;
-      const t = skipped ? 1 : Math.min(1, (ts - t0) / 760);
-      const e = easeInOut(t);
-      const p = q.map((v, i) => lerp(v, corners[perm[i]], e));
-      stage.style.clipPath = `polygon(${p.map((v) => `${v[0]}px ${v[1]}px`).join(', ')})`;
-      // рама и переплёт «Т» растворяются к середине пути
-      // рама — полоса внутри проёма, переплёт «Т» — толщиной в долю ширины: окно растёт вместе со своим весом
-      const mid = p.reduce((a, v) => [a[0] + v[0] / 4, a[1] + v[1] / 4], [0, 0]);
-      const inner = p.map((v) => lerp(v, mid, 0.07));
-      const width = Math.hypot(p[1][0] - p[0][0], p[1][1] - p[0][1]);
-      const ib = lerp(inner[0], inner[1], 0.5), tl = lerp(inner[0], inner[3], 0.68), tr = lerp(inner[1], inner[2], 0.68);
-      overlay.style.opacity = String(Math.max(0, 1 - t / 0.6));
-      const [sash, mull] = overlay.children;
-      sash.setAttribute('d', `M${p.map(pt).join('L')}Z M${inner.map(pt).join('L')}Z`);
-      mull.setAttribute('d', `M${pt(ib)}L${pt(lerp(tl, tr, 0.5))} M${pt(tl)}L${pt(tr)}`);
-      mull.setAttribute('stroke-width', (width * 0.045).toFixed(1));
+      const t = skipped ? 1 : Math.min(1, (ts - t0) / 800);
+      open(t);
       if (t < 1) requestAnimationFrame(step);
       else { fly.finish(); glow.finish(); done(); }
     };
+    open(0);
     requestAnimationFrame(step);
     // переход можно оборвать касанием
     stage.addEventListener('pointerdown', () => { skipped = true; }, { once: true });
@@ -909,12 +992,8 @@
         $('pick').hidden = false;
         $('filesP').hidden = false;
       }
-      if (window.Court) {
-        court = window.Court.mount({
-          base: document.querySelector('.scene-base'),
-          lights: document.querySelector('.scene-lights'),
-          onLayout: () => court && placeLabels(),
-        });
+      if (window.Sky) {
+        sky = window.Sky.mount({ root: document.querySelector('.scene'), onLayout: placeLabels });
       }
       renderAll();
       connect();

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#14171b">
+<meta name="theme-color" content="#131417">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Свет в окне">
-<title>Свет в окне</title>
+<meta name="apple-mobile-web-app-title" content="Смотрильня">
+<title>Смотрильня</title>
 <link rel="manifest" href="/assets/manifest.webmanifest">
 <link rel="icon" id="favicon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body data-view="lobby">
-<!-- Иконки: Phosphor Icons (MIT), начертание light. Окно — знак сервиса. -->
+<!-- Иконки: Phosphor Icons (MIT), начертание light -->
 <svg class="sprite" width="0" height="0" aria-hidden="true">
   <symbol id="i-play" viewBox="0 0 256 256"><path d="M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z"/></symbol>
   <symbol id="i-pause" viewBox="0 0 256 256"><path d="M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z"/></symbol>
@@ -33,29 +33,26 @@
 </svg>
 
 <div class="scene" aria-hidden="true">
-  <canvas class="scene-base"></canvas>
-  <canvas class="scene-lights"></canvas>
-  <div class="fog fog-a"></div>
-  <div class="fog fog-b"></div>
   <div class="scene-labels" id="labels"></div>
 </div>
 
 <header class="top">
-  <p class="wordmark">Свет в окне</p>
-  <a class="link" href="/logout"><svg class="icon" aria-hidden="true"><use href="#i-out"/></svg>Выйти</a>
+  <a class="out" href="/logout">Выйти</a>
 </header>
 
 <main class="lobby" id="join">
-  <h1 class="film" id="filmTitle">Свет в окне</h1>
+  <p class="here" data-lit="false"><span class="lamp" aria-hidden="true"></span><span id="together"></span></p>
+  <h1 class="title" id="filmTitle"></h1>
   <p class="state" id="joinHint">Загружаем фильм…</p>
-  <p class="together" id="together"></p>
-  <button class="btn" id="joinBtn" disabled>Смотреть</button>
-  <ul class="notes" id="notes">
-    <li>Пауза и перемотка у вас общие: нажимает один, видят оба.</li>
-    <li>Лучше в наушниках, иначе звук фильма попадёт в созвон.</li>
-    <li id="installHint" hidden>На iPhone удобнее с экрана «Домой»: «Поделиться», затем «На экран „Домой“».</li>
-  </ul>
-  <label class="pick" id="pick" hidden>Сменить фильм у обоих
+  <div class="row">
+    <button class="btn" id="joinBtn" disabled><span class="lamp" aria-hidden="true"></span>Смотреть</button>
+    <ul class="notes" id="notes">
+      <li>Пауза и перемотка у вас общие: нажимает один, видят оба.</li>
+      <li>Лучше в наушниках, иначе звук фильма попадёт в созвон.</li>
+      <li id="installHint" hidden>На iPhone удобнее с экрана «Домой»: «Поделиться», затем «На экран „Домой“».</li>
+    </ul>
+  </div>
+  <label class="pick" id="pick" hidden><span>Сменить фильм у обоих</span>
     <select class="select" id="files"></select>
   </label>
 </main>
@@ -96,16 +93,15 @@
   <div class="prestart" id="prestart" hidden>
     <p class="pre-film" id="preTitle"></p>
     <p class="pre-note">Фильм начнётся у обоих одновременно, после отсчёта.</p>
-    <button class="btn" id="startBtn">Начать у обоих</button>
+    <button class="btn" id="startBtn"><span class="lamp" aria-hidden="true"></span>Начать у обоих</button>
   </div>
   <div class="countdown" id="countdown" hidden><span class="count-num" id="countNum">3</span><span class="count-note">Фильм начинается у обоих</span></div>
   <p class="toast" id="status" role="status" aria-live="polite"></p>
   <p class="notice" id="notice" role="status" aria-live="polite" hidden></p>
 </section>
 
-<svg class="frame-overlay" id="frameOverlay" aria-hidden="true" hidden><path class="sash" fill-rule="evenodd"/><path class="mull"/></svg>
-
-<script src="/assets/court.js"></script>
+<script src="/assets/stars.js"></script>
+<script src="/assets/sky.js"></script>
 <script src="/assets/app.js"></script>
 </body>
 </html>
