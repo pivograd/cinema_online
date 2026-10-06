@@ -401,7 +401,11 @@ async function handle(req, res) {
     ensureFile();
     // users — все зрители, а не только те, кто сейчас в сети: интерфейс показывает и тёмные «окна»
     res.writeHead(200, { 'Content-Type': 'application/json' })
-      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs(), hls: listHls(), build: BUILD }));
+      .end(JSON.stringify({
+        user, users: [...USERS.keys()], files: listMedia(), subs: listSubs(), hls: listHls(), build: BUILD,
+        // состояние зала — чтобы лобби показало фильм, пока соединение с залом ещё не установилось
+        room: { ...snapshot(), serverTime: Date.now() },
+      }));
     return;
   }
   if (pathname.startsWith('/video/') || pathname.startsWith('/subs/')) {
@@ -464,7 +468,11 @@ const stillBuffering = (user) => {
 };
 function presence() {
   const status = {};
-  for (const user of roster()) status[user] = { joined: watching(user).length > 0, buffering: stillBuffering(user) };
+  for (const user of roster()) {
+    const tabs = watching(user);
+    // call — смотрит без звука: iPhone отдал звук звонку (второму зрителю показываем, почему)
+    status[user] = { joined: tabs.length > 0, buffering: stillBuffering(user), call: tabs.some((c) => c.call) };
+  }
   return { type: 'presence', users: roster(), status };
 }
 function publish(by, cause) {
@@ -534,13 +542,16 @@ wss.on('connection', (ws) => {
     if (m.type === 'diag') {
       const minute = Math.floor(Date.now() / 60000);
       if (ws.diagMinute !== minute) { ws.diagMinute = minute; ws.diagCount = 0; }
-      if (++ws.diagCount <= 30) console.log(`diag ${ws.user} ${JSON.stringify(m).slice(0, 700)}`);
+      // пульс и события зала ограничиваем, а редкие и важные (ошибки, паузы от системы, звонок) пишем всегда
+      const routine = m.event === 'beat' || m.event === 'state';
+      if (!routine || ++ws.diagCount <= 30) console.log(`diag ${ws.user} ${JSON.stringify(m).slice(0, 700)}`);
       return;
     }
     if (m.type === 'status') {
       ws.joined = !!m.joined;
       ws.buffering = !!m.buffering && ws.joined;
       ws.visible = m.visible !== false;
+      ws.call = !!m.call && ws.joined;
       onBuffering(ws.user);
       broadcast(presence());
       return;
@@ -557,6 +568,9 @@ wss.on('connection', (ws) => {
       const shadow = m.cause === 'system' && ws.visible === false
         && watching(ws.user).some((c) => c !== ws && c.visible !== false);
       if (shadow) return;
+      // Запуск «от системы» при стоящем зале — это iOS сам продолжил видео после звонка. Зал из-за него не стартует:
+      // у зрителя видео встанет обратно на ближайшем тике.
+      if (m.playing && m.cause === 'system' && !room.playing) return;
       // запуск с самого начала — с общим отсчётом, чтобы оба увидели первые секунды
       const countdown = m.playing && !room.playing && pos < 2;
       Object.assign(room, {
@@ -583,7 +597,7 @@ setInterval(() => {
   // опаздывает дольше одного интервала, и обрыв на первом же пропуске рвал бы зрителю зал посреди фильма.
   for (const c of wss.clients) {
     c.missed = c.alive ? 0 : (c.missed || 0) + 1;
-    if (c.missed >= 3) { c.terminate(); continue; }
+    if (c.missed >= 3) { console.warn(`ws ${c.user}: 3 пропущенных pong, обрываем`); c.terminate(); continue; }
     c.alive = false;
     c.ping();
   }

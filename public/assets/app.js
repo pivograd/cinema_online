@@ -102,7 +102,7 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
   }
   const notices = new Map(); // ключ -> текст; показываем самое важное
-  const NOTICE_ORDER = ['conn', 'blocked', 'wait', 'buffer'];
+  const NOTICE_ORDER = ['conn', 'call', 'blocked', 'wait', 'buffer'];
   function notice(key, text) {
     if (text) notices.set(key, text); else notices.delete(key);
     const top = NOTICE_ORDER.find((k) => notices.has(k));
@@ -204,10 +204,12 @@
     const current = source = { file, mode };
     if (mode === 'hlsjs') {
       video.removeAttribute('src');
+      ourPauseAt = now();
       video.load(); // прервать загрузку прежнего файла
       loadHlsLib().then((Hls) => attachHls(Hls, current), () => { if (source === current) fallBackToMp4(file); });
     } else {
       video.src = mediaUrl(mode === 'native' ? hlsByFile[file] : file);
+      ourPauseAt = now();
       video.load();
     }
     setupTracks(file);
@@ -253,9 +255,11 @@
     if (wait) countdown(wait); else countdown(0);
     if (shouldPlay && video.paused) {
       changed = true;
+      if (callMuted) video.muted = true; // идёт звонок: со звуком iOS снова остановит видео
       video.play().catch(onBlocked);
     } else if (!shouldPlay && !video.paused) {
       changed = true;
+      ourPauseAt = now();
       video.pause();
     }
     if (changed) ignoreEventsUntil = now() + 600;
@@ -301,7 +305,7 @@
   // видео: запусти фильм в фоновой вкладке — и iOS поставит на паузу ту, где смотрят.
   const backgroundTab = () => document.hidden && !document.pictureInPictureElement && video.webkitPresentationMode !== 'picture-in-picture';
   function sendStatus() {
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'status', joined, buffering, visible: !backgroundTab() }));
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'status', joined, buffering, visible: !backgroundTab(), call: callMuted }));
   }
 
   // --- версия страницы ---
@@ -372,10 +376,37 @@
   });
   video.addEventListener('pause', () => {
     const wanted = now() < wantPauseUntil || systemControls();
-    if (!wanted && !video.ended) diag('media-pause', { afterPlayMs: Math.round(now() - playedAt), ignored: now() < ignoreEventsUntil });
+    const ours = now() - ourPauseAt < 1000; // поставили на паузу мы сами (apply, смена файла)
+    if (!wanted && !ours && !video.ended) {
+      diag('media-pause', { afterPlayMs: Math.round(now() - playedAt), ignored: now() < ignoreEventsUntil, muted: video.muted });
+      const sinceSound = now() - Math.max(playedAt, unmutedAt);
+      if (joined && !video.muted && !document.hidden && video.readyState >= 3 && sinceSound < 1500 && audioTaken()) return;
+    }
     if (now() < ignoreEventsUntil || !joined || video.ended) return;
     sendControl(false, reportPosition(), wanted ? 'user' : 'system');
   });
+
+  // --- звонок забрал звук ---
+  // Пока на iPhone идёт звонок, iOS может не давать фильму звук: видео со звуком встаёт через доли секунды после
+  // запуска, пауза приходит от системы, и без этой защиты зал вставал бы у обоих, а плеер снова и снова жал play.
+  // Видео без звука аудиосессию не просит и идёт. Поэтому у этого зрителя выключаем звук и включаем субтитры,
+  // а зал не трогаем. Звук человек вернёт сам кнопкой звука; если звонок ещё идёт — снова без звука.
+  let callMuted = false, unmutedAt = 0, ourPauseAt = 0;
+  function audioTaken() {
+    if (callMuted && video.muted) return false; // уже без звука и всё равно встаёт — это не звонок
+    callMuted = true;
+    video.muted = true;
+    if (subIndex < 0 && video.textTracks.length) { subIndex = 0; applySubs(); } // русские первыми в списке
+    notice('call', `Идёт звонок, и iPhone не даёт фильму звук. Смотрим без звука${subIndex >= 0 ? ', с субтитрами' : ''}.`);
+    diag('audio-taken', { subs: subIndex >= 0 });
+    sendStatus();
+    renderControls();
+    if (last && last.playing && !counting()) {
+      ignoreEventsUntil = now() + 800;
+      video.play().catch(onBlocked);
+    }
+    return true;
+  }
   video.addEventListener('seeked', () => {
     if (selfSeek) { selfSeek = false; return; }
     // Seeked бывает и от самого плеера: hls.js перешагивает дырку, Safari выравнивается на ключевой кадр,
@@ -532,6 +563,9 @@
         last = { ...m, receivedAt: now() };
         if (joined) diag('state', { cause: m.cause || null, by: m.by || null, playing: m.playing, pos: +m.position.toFixed(1), hold: m.hold || null });
         if (joined) describe(m, prev, expected);
+        // сервер перестал ждать нашу догрузку («nowait») — сбрасываем и свою, иначе «Догружаем фильм…» залипнет,
+        // а при переподключении мы снова поставили бы зал на паузу
+        if (m.cause === 'nowait' && m.by === me && buffering) { buffering = false; clearInterval(stallPoll); notice('buffer', null); }
         ignoreTicksUntil = 0;
         apply({ hard: true });
         renderWait();
@@ -547,12 +581,14 @@
 
   function onPresence(m) {
     const before = online;
+    const beforeStatus = status;
     online = new Set(m.users);
     status = m.status || {};
     if (presenceSeen && joined) {
       for (const u of others()) {
         if (online.has(u) && !before.has(u)) toast(`${nameOf(u)}: в сети`);
         else if (!online.has(u) && before.has(u)) toast(`${nameOf(u)}: не в сети`);
+        else if (status[u] && status[u].call && !(beforeStatus[u] && beforeStatus[u].call)) toast(`${nameOf(u)} смотрит без звука из-за звонка`);
       }
     }
     presenceSeen = true;
@@ -818,6 +854,10 @@
   function toggleMute() {
     video.muted = !video.muted;
     if (!video.muted && video.volume === 0) video.volume = 1;
+    if (!video.muted) {
+      unmutedAt = now(); // если звонок ещё идёт, iOS снова остановит видео — audioTaken вернёт «без звука»
+      if (callMuted) { callMuted = false; notice('call', null); sendStatus(); }
+    }
   }
   $('fsBtn').addEventListener('click', toggleFullscreen);
   function toggleFullscreen() {
@@ -1077,6 +1117,7 @@
         if (source !== current) return; // пока ждали, выбрали другой фильм
         videoReady = false;
         ignoreEventsUntil = now() + 1500;
+        ourPauseAt = now();
         video.load();
         apply({ hard: true });
       }, 1000 * videoRetries);
@@ -1090,24 +1131,35 @@
 
 
   // --- запуск ---
-  fetch('/api/media')
-    .then((r) => { if (r.status === 401) { location.href = '/login'; throw new Error('401'); } return r.json(); })
-    .then((d) => {
-      if (staleReload(d.build)) return;
-      me = d.user;
-      everyone = d.users && d.users.length ? d.users : [d.user];
-      subsByFile = d.subs || {};
-      hlsByFile = d.hls || {};
-      if (d.files.length > 1) {
-        for (const sel of [$('files'), $('filesP')]) for (const f of d.files) sel.add(new Option(title(f), f));
-        $('pick').hidden = false;
-        $('filesP').hidden = false;
-      }
-      if (window.Sky) {
-        sky = window.Sky.mount({ root: document.querySelector('.scene'), onLayout: placeLabels });
-      }
-      renderAll();
-      connect();
-    })
-    .catch(() => {});
+  // Список фильмов и состояние зала приходят по обычному HTTP — тому соединению, на котором уже открылась
+  // страница. Так лобби показывает фильм и начинает его грузить, даже пока соединение с залом (WebSocket) ещё
+  // пробивается через плохую сеть. Не дошёл ответ — пробуем снова, а не застываем на «Загружаем фильм…».
+  function boot() {
+    fetch('/api/media')
+      .then((r) => {
+        if (r.status === 401) { location.href = '/login'; return null; }
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d) => d && start(d), () => setTimeout(boot, 3000));
+  }
+  function start(d) {
+    if (staleReload(d.build)) return;
+    me = d.user;
+    everyone = d.users && d.users.length ? d.users : [d.user];
+    subsByFile = d.subs || {};
+    hlsByFile = d.hls || {};
+    if (d.files.length > 1) {
+      for (const sel of [$('files'), $('filesP')]) for (const f of d.files) sel.add(new Option(title(f), f));
+      $('pick').hidden = false;
+      $('filesP').hidden = false;
+    }
+    if (window.Sky) {
+      sky = window.Sky.mount({ root: document.querySelector('.scene'), onLayout: placeLabels });
+    }
+    if (d.room && !last) { last = { ...d.room, receivedAt: now() }; apply(); }
+    renderAll();
+    connect();
+  }
+  boot();
 })();

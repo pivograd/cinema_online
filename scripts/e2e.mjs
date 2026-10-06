@@ -62,8 +62,10 @@ try {
   check('Range отдаёт 206', r.status === 206 && r.headers.get('content-range')?.startsWith('bytes 0-99/'));
   check('presence виден', (await a.textContent('#who')).includes('boris'), await a.textContent('#who'));
 
-  // A жмёт play → у B тоже играет (старт с самого начала идёт через общий отсчёт 3 с)
-  await a.evaluate(() => document.getElementById('v').play());
+  // A жмёт play → у B тоже играет (старт с самого начала идёт через общий отсчёт 3 с).
+  // Play и паузу жмём как человек — пробелом: прямой video.play() из скрипта плеер считает «системным»
+  // (так iOS сам продолжает видео после звонка), и зал от него не стартует.
+  await a.keyboard.press('Space');
   await sleep(4500);
   let sa = await state(a), sb = await state(b);
   check('play синхронизирован', !sa.paused && !sb.paused, JSON.stringify({ sa, sb }));
@@ -82,14 +84,14 @@ try {
   check('после seek продолжают играть', !sa.paused && !sb.paused);
 
   // B ставит паузу → A тоже
-  await b.evaluate(() => document.getElementById('v').pause());
+  await b.keyboard.press('Space');
   await sleep(1500);
   sa = await state(a); sb = await state(b);
   check('pause синхронизирован', sa.paused && sb.paused);
   check('позиции на паузе совпадают', Math.abs(sa.t - sb.t) < 0.5, `Δ=${(sa.t - sb.t).toFixed(2)}`);
 
   // A возобновляет
-  await a.evaluate(() => document.getElementById('v').play());
+  await a.keyboard.press('Space');
   await sleep(2000);
   sa = await state(a); sb = await state(b);
   check('resume синхронизирован', !sa.paused && !sb.paused && Math.abs(sa.t - sb.t) < 1);
