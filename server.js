@@ -15,6 +15,9 @@ const COOKIE = 'cinema_session';
 // вход запоминается на устройстве: вводить пароль каждый вечер — худший экран сервиса
 const SESSION_TTL_MS = (Number(process.env.SESSION_DAYS) || 30) * 24 * 60 * 60 * 1000;
 const VIDEO_TYPES = { '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.webm': 'video/webm' };
+// нарезка HLS лежит рядом с фильмом: film.mp4 → film.hls/master.m3u8, film.hls/720p/seg_00000.m4s …
+const HLS_TYPES = { '.m3u8': 'application/vnd.apple.mpegurl', '.m4s': 'video/iso.segment', '.mp4': 'video/mp4' };
+const HLS_LIB = path.join(__dirname, 'node_modules', 'hls.js', 'dist', 'hls.light.min.js');
 const SUB_TYPES = new Set(['.vtt', '.srt']);
 const COUNTDOWN_MS = 3000; // общий отсчёт, когда фильм запускают с самого начала
 const STATIC_TYPES = {
@@ -159,6 +162,22 @@ function readMediaDir() {
   }
 }
 const listMedia = () => readMediaDir().filter((f) => VIDEO_TYPES[path.extname(f).toLowerCase()]);
+// у каких фильмов есть HLS: плеер возьмёт его вместо mp4 (качество подстраивается под скорость сети)
+function listHls() {
+  const hls = {};
+  for (const video of listMedia()) {
+    const master = video.slice(0, -path.extname(video).length) + '.hls/master.m3u8';
+    if (fs.existsSync(path.join(MEDIA_DIR, master))) hls[video] = master;
+  }
+  return hls;
+}
+// тип файла по пути внутри media: сам фильм или файл его нарезки HLS (<фильм>.hls/<качество>/<файл>)
+function mediaType(name) {
+  const parts = name.split('/');
+  const ext = path.extname(name).toLowerCase();
+  if (parts.length === 1) return VIDEO_TYPES[ext];
+  return parts[0].endsWith('.hls') && !parts.includes('..') ? HLS_TYPES[ext] : undefined;
+}
 
 // субтитры лежат рядом с фильмом: film.mp4 → film.srt, film.ru.vtt, film.en.srt
 const SUB_LANGS = { ru: 'Русские', en: 'Английские', uk: 'Украинские', de: 'Немецкие', fr: 'Французские', es: 'Испанские' };
@@ -172,7 +191,9 @@ function listSubs() {
       .map((file) => {
         const tag = file.slice(stem.length + 1, -path.extname(file).length).toLowerCase();
         return { file, lang: tag || 'und', label: SUB_LANGS[tag] || tag || 'Субтитры' };
-      });
+      })
+      // кнопка субтитров перебирает дорожки по порядку: первой включается русская
+      .sort((a, b) => (b.lang === 'ru') - (a.lang === 'ru'));
   }
   return subs;
 }
@@ -222,7 +243,8 @@ function pageHeaders(req) {
   const sockets = host ? ` wss://${host} ws://${host}` : '';
   return {
     'Content-Security-Policy': [
-      "default-src 'self'", "script-src 'self'", "style-src 'self'", "img-src 'self'", "media-src 'self'",
+      // blob: в media-src — для hls.js: он отдаёт видео плееру через MediaSource
+      "default-src 'self'", "script-src 'self'", "style-src 'self'", "img-src 'self'", "media-src 'self' blob:",
       `connect-src 'self'${sockets}`, "font-src 'self'", "manifest-src 'self'", "object-src 'none'",
       "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
     ].join('; '),
@@ -248,14 +270,28 @@ function serveStatic(req, res, file) {
 }
 
 function serveVideo(req, res, name) {
-  const full = path.join(MEDIA_DIR, name);
-  const type = VIDEO_TYPES[path.extname(name).toLowerCase()];
-  if (!type || !full.startsWith(MEDIA_DIR + path.sep) || !fs.existsSync(full)) {
+  const full = path.resolve(MEDIA_DIR, name);
+  const type = mediaType(name);
+  let stat = null;
+  if (type && full.startsWith(MEDIA_DIR + path.sep)) {
+    try { stat = fs.statSync(full); } catch { stat = null; }
+  }
+  if (!stat || !stat.isFile()) {
     res.writeHead(404).end('Not found');
     return;
   }
-  const size = fs.statSync(full).size;
-  const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+  const size = stat.size;
+  // Фильм могут заменить файлом с тем же именем (пережали, заменили нарезку). Кеш браузера тогда смешал бы куски
+  // старого и нового файла, поэтому кешированное всегда сверяется по ETag (размер и время изменения).
+  const etag = `"${size.toString(36)}-${Math.floor(stat.mtimeMs).toString(36)}"`;
+  const validators = { ETag: etag, 'Last-Modified': stat.mtime.toUTCString(), 'Cache-Control': 'private, no-cache' };
+  if (req.headers['if-none-match'] === etag) {
+    res.writeHead(304, validators).end();
+    return;
+  }
+  // If-Range от старой версии файла: кусок не подойдёт, отдаём файл целиком
+  const rangeHeader = req.headers['if-range'] && req.headers['if-range'] !== etag ? '' : req.headers.range;
+  const range = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader || '');
   let start = 0;
   let end = size - 1;
   let status = 200;
@@ -276,7 +312,7 @@ function serveVideo(req, res, name) {
     'Content-Type': type,
     'Accept-Ranges': 'bytes',
     'Content-Length': end - start + 1,
-    'Cache-Control': 'private, max-age=3600',
+    ...validators,
   };
   if (status === 206) headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
   res.writeHead(status, headers);
@@ -326,6 +362,12 @@ async function handle(req, res) {
   if (pathname === '/login') return serveStatic(req, res, 'login.html');
   if (pathname === '/health') { res.writeHead(200).end('ok'); return; }
   // стили, шрифты и скрипты нужны и странице входа, поэтому /assets открыт без логина (секретов там нет)
+  // hls.js — плеер HLS для браузеров, которые не играют его сами (всё, кроме Safari); отдаём со своего сервера
+  if (pathname === '/assets/hls.js') {
+    res.writeHead(200, { 'Content-Type': STATIC_TYPES['.js'], 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
+    pipeline(fs.createReadStream(HLS_LIB), res, () => {});
+    return;
+  }
   if (pathname.startsWith('/assets/')) return serveStatic(req, res, pathname.slice(1));
 
   if (!user) {
@@ -339,7 +381,7 @@ async function handle(req, res) {
     ensureFile();
     // users — все зрители, а не только те, кто сейчас в сети: интерфейс показывает и тёмные «окна»
     res.writeHead(200, { 'Content-Type': 'application/json' })
-      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs() }));
+      .end(JSON.stringify({ user, users: [...USERS.keys()], files: listMedia(), subs: listSubs(), hls: listHls() }));
     return;
   }
   if (pathname.startsWith('/video/') || pathname.startsWith('/subs/')) {

@@ -67,11 +67,25 @@
   };
 
   // --- где сейчас комната по часам сервера ---
-  const startsInNow = () => (last && last.playing ? Math.max(0, last.startsIn - (now() - last.receivedAt)) : 0);
+  // Считаем от serverTime сообщения, а не от момента, когда оно дошло: в загруженной сети (рядом качается фильм)
+  // тик идёт и полсекунды, и секунду, и эта задержка читалась бы как рассинхрон — с лишней перемоткой.
+  // Смещение часов меряем ping/pong и берём замер с самым коротким путём туда-обратно: в нём меньше всего очередей.
+  let clock = null;
+  const clockSamples = [];
+  function onPong(m) {
+    const rtt = now() - m.t;
+    if (!(rtt >= 0) || !Number.isFinite(m.serverTime)) return;
+    clockSamples.push({ offset: m.serverTime + rtt / 2 - now(), rtt });
+    if (clockSamples.length > 8) clockSamples.shift();
+    clock = clockSamples.reduce((a, b) => (b.rtt < a.rtt ? b : a));
+  }
+  // сколько прошло по часам сервера с момента, который описывает last; пока часы не сверены — по приходу
+  const sinceLast = () => (clock && Number.isFinite(last.serverTime) ? now() + clock.offset - last.serverTime : now() - last.receivedAt);
+  const startsInNow = () => (last && last.playing ? Math.max(0, last.startsIn - sinceLast()) : 0);
   function roomPosition() {
     if (!last) return 0;
     if (!last.playing) return last.position;
-    return last.position + Math.max(0, now() - last.receivedAt - last.startsIn) / 1000;
+    return last.position + Math.max(0, sinceLast() - last.startsIn) / 1000;
   }
 
   // --- общие события: одинаковая карточка у обоих ---
@@ -114,18 +128,84 @@
     else notice('wait', `${last.hold}: догружается, ждём. Нажмите «Продолжить», чтобы не ждать.`);
   }
 
-  // --- применение эталонного состояния к плееру ---
+  // --- источник видео ---
+  // Есть нарезка HLS — берём её: качество подстраивается под скорость сети, перемотка грузит только нужные секунды.
+  // Safari и любой браузер на iPhone играют HLS сами; остальным нужен hls.js, его грузим, только когда понадобится.
+  // Нет нарезки или HLS не завёлся — обычный mp4.
+  let hlsByFile = {};
+  const hlsFailed = new Set();
+  const appleHls = (isIOS || /^((?!chrome|chromium|android|crios|fxios|edg|opr).)*safari/i.test(navigator.userAgent))
+    && !!video.canPlayType('application/vnd.apple.mpegurl');
+  let source = null; // { file, mode: 'native' | 'hlsjs' | 'mp4' }
+  let hls = null;
+  let hlsLib = null;
+  const mediaUrl = (p) => '/video/' + p.split('/').map(encodeURIComponent).join('/');
+  function sourceMode(file) {
+    if (!hlsByFile[file] || hlsFailed.has(file)) return 'mp4';
+    if (appleHls) return 'native';
+    return window.MediaSource || window.ManagedMediaSource ? 'hlsjs' : 'mp4';
+  }
+  function loadHlsLib() {
+    hlsLib ||= new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = '/assets/hls.js';
+      s.onload = () => (window.Hls && window.Hls.isSupported() ? resolve(window.Hls) : reject(new Error('hls.js не поддерживается')));
+      s.onerror = () => { hlsLib = null; reject(new Error('hls.js не загрузился')); };
+      document.head.append(s);
+    });
+    return hlsLib;
+  }
+  // HLS не завёлся: дальше этот фильм идёт обычным mp4
+  function fallBackToMp4(file) {
+    hlsFailed.add(file);
+    source = null;
+    ensureSource(file);
+    apply({ hard: true });
+  }
+  function attachHls(Hls, current) {
+    if (source !== current) return; // пока грузился hls.js, выбрали другой фильм
+    hls = new Hls({
+      enableWorker: false, // без blob-воркеров, которые запретила бы CSP; fMP4 почти не нужно перепаковывать
+      startPosition: joined ? roomPosition() : -1,
+      backBufferLength: 90,
+    });
+    let mediaRecoveries = 0;
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { if (joined) apply({ hard: true }); });
+    // У hls.js свои повторы при обрывах; сюда доходит только то, что он не вытянул сам
+    hls.on(Hls.Events.ERROR, (_, d) => {
+      if (!d.fatal || source !== current) return;
+      if (d.type === Hls.ErrorTypes.NETWORK_ERROR && videoRetries < 5) {
+        videoRetries++;
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(() => { if (source === current && hls) hls.startLoad(); }, 1000 * videoRetries);
+      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveries++ < 1) {
+        hls.recoverMediaError();
+      } else {
+        fallBackToMp4(current.file);
+      }
+    });
+    hls.loadSource(mediaUrl(hlsByFile[current.file]));
+    hls.attachMedia(video);
+  }
   function ensureSource(file) {
-    const src = '/video/' + encodeURIComponent(file);
-    if (video.getAttribute('src') === src) return;
+    const mode = sourceMode(file);
+    if (source && source.file === file && source.mode === mode) return;
     videoReady = false;
     videoError = false;
     videoRetries = 0;
     clearTimeout(retryTimer);
     ignoreEventsUntil = now() + 800;
-    video.src = src;
+    if (hls) { hls.destroy(); hls = null; }
+    const current = source = { file, mode };
+    if (mode === 'hlsjs') {
+      video.removeAttribute('src');
+      video.load(); // прервать загрузку прежнего файла
+      loadHlsLib().then((Hls) => attachHls(Hls, current), () => { if (source === current) fallBackToMp4(file); });
+    } else {
+      video.src = mediaUrl(mode === 'native' ? hlsByFile[file] : file);
+      video.load();
+    }
     setupTracks(file);
-    video.load();
     for (const sel of [$('files'), $('filesP')]) sel.value = file;
     $('pTitle').textContent = title(file);
     $('preTitle').textContent = title(file);
@@ -138,19 +218,25 @@
     ensureSource(last.file);
     if (!joined || blocked) return;
 
+    // Видео догружается: перемотка сейчас выбросила бы то, что уже скачано, и догрузка началась бы заново
+    // (на телефоне это заметнее всего). Плановые тики ждут; если догрузка затянется, сервер поставит зал на паузу
+    // («ждём друг друга»), а выровняемся, когда данные будут.
+    if (!hard && last.playing && !video.paused && video.readyState < 3) return;
+
     const wait = startsInNow() > 50 ? startsInNow() : 0; // хвост отсчёта короче кадра — уже старт
     const target = roomPosition();
     const drift = video.currentTime - target;
     const abs = Math.abs(drift);
     let changed = false;
-    if (abs > 1.2 || (hard && abs > 0.3)) {
+    if (abs > 2 || (hard && abs > 0.3)) {
       selfSeek = true;
       video.currentTime = target;
       video.playbackRate = 1;
       changed = true;
     } else if (last.playing && !wait && abs > 0.15) {
-      // мелкий дрейф гасим плавным изменением скорости
-      video.playbackRate = drift > 0 ? 0.95 : 1.05;
+      // дрейф до 2 с гасим скоростью, а не перемоткой: каждая перемотка — новая догрузка
+      const k = abs > 0.6 ? 0.1 : 0.05;
+      video.playbackRate = drift > 0 ? 1 - k : 1 + k;
     } else {
       video.playbackRate = 1;
     }
@@ -220,6 +306,9 @@
   video.addEventListener('seeked', () => {
     if (selfSeek) { selfSeek = false; return; }
     if (now() < ignoreEventsUntil || !joined) return;
+    // Сдвиг меньше секунды от позиции зала — не перемотка человека, а сам плеер (hls.js перешагивает дырку
+    // между кусками, Safari выравнивается на ключевой кадр). Рассылать такое второму зрителю незачем.
+    if (Math.abs(video.currentTime - roomPosition()) < 1) return;
     // во время общего отсчёта видео ещё стоит, но фильм уже запущен: перемотка не должна его отменять
     sendControl(!video.paused || counting(), video.currentTime, causeNow());
   });
@@ -246,13 +335,30 @@
   const userSkip = (d) => userSeek(video.currentTime + d);
 
   // --- догрузка: «ждём друг друга» ---
-  let buffering = false, stallTimer = 0, stallPoll = 0;
+  let buffering = false, stallTimer = 0, stallPoll = 0, bufferingSince = 0;
+  // сколько секунд фильма уже скачано вперёд от текущей позиции
+  function bufferedAhead() {
+    const t = video.currentTime, b = video.buffered;
+    for (let i = 0; i < b.length; i++) if (b.start(i) <= t + 0.25 && b.end(i) > t) return b.end(i) - t;
+    return 0;
+  }
+  // Догрузка закончилась, когда впереди есть хотя бы 8 с фильма (или он докачан до конца). Если продолжать, как
+  // только пришли первые кадры, медленная сеть даёт цикл «на миг включилось — снова ждём». Телефон на паузе иногда
+  // перестаёт качать, поэтому через 12 с ожидания продолжаем с тем, что есть.
+  const RESUME_AHEAD_S = 8;
+  function readyToResume() {
+    if (video.readyState < 3) return false;
+    const ahead = bufferedAhead();
+    return ahead >= RESUME_AHEAD_S || video.currentTime + ahead >= (video.duration || Infinity) - 0.5
+      || now() - bufferingSince > 12000;
+  }
   function setBuffering(on) {
     if (buffering === on) return;
     buffering = on;
+    if (on) bufferingSince = now();
     sendStatus();
     clearInterval(stallPoll);
-    if (on) stallPoll = setInterval(() => { if (video.readyState >= 3) setBuffering(false); }, 400);
+    if (on) stallPoll = setInterval(() => { if (readyToResume()) setBuffering(false); }, 400);
     notice('buffer', on && !(last && last.hold) ? 'Догружаем фильм…' : null);
   }
   video.addEventListener('waiting', () => {
@@ -262,7 +368,7 @@
       if (joined && video.readyState < 3 && last && (last.playing || last.hold === me)) setBuffering(true);
     }, 1500);
   });
-  for (const ev of ['playing', 'canplay']) video.addEventListener(ev, () => { clearTimeout(stallTimer); if (video.readyState >= 3) setBuffering(false); });
+  for (const ev of ['playing', 'canplay']) video.addEventListener(ev, () => { clearTimeout(stallTimer); if (readyToResume()) setBuffering(false); });
 
   // --- браузер заблокировал воспроизведение ---
   function onBlocked(err) {
@@ -281,6 +387,8 @@
   }
 
   // --- WebSocket ---
+  let pingTimer = 0;
+  const ping = () => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping', t: now() })); };
   function connect() {
     ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
     ws.onopen = () => {
@@ -289,8 +397,15 @@
       notice('conn', null);
       sendStatus();
       renderAll();
+      // сверка часов: три быстрых замера сразу, дальше раз в 10 с
+      ping();
+      setTimeout(ping, 400);
+      setTimeout(ping, 1200);
+      clearInterval(pingTimer);
+      pingTimer = setInterval(ping, 10000);
     };
     ws.onclose = () => {
+      clearInterval(pingTimer);
       connected = false;
       if (joined) notice('conn', 'Нет связи. Переподключаемся…');
       renderAll();
@@ -298,7 +413,8 @@
     };
     ws.onmessage = (e) => {
       const m = JSON.parse(e.data);
-      if (m.type === 'presence') onPresence(m);
+      if (m.type === 'pong') onPong(m);
+      else if (m.type === 'presence') onPresence(m);
       else if (m.type === 'state') {
         const expected = roomPosition();
         const prev = last;
@@ -757,13 +873,14 @@
   // файла. Поэтому сначала тихо перезагружаем тот же файл и возвращаемся на позицию зала, и только если не помогло,
   // говорим про формат. Неподходящий формат виден сразу, до первой картинки: ему хватит одной повторной попытки.
   video.addEventListener('error', () => {
-    const src = video.getAttribute('src');
+    if (!source || source.mode === 'hlsjs') return; // у hls.js свои повторы, см. attachHls
+    const current = source;
     const unsupported = video.error && video.error.code === 4 && !videoReady;
-    if (src && videoRetries < (unsupported ? 1 : 5)) {
+    if (videoRetries < (unsupported ? 1 : 5)) {
       videoRetries++;
       clearTimeout(retryTimer);
       retryTimer = setTimeout(() => {
-        if (video.getAttribute('src') !== src) return; // пока ждали, выбрали другой фильм
+        if (source !== current) return; // пока ждали, выбрали другой фильм
         videoReady = false;
         ignoreEventsUntil = now() + 1500;
         video.load();
@@ -771,6 +888,7 @@
       }, 1000 * videoRetries);
       return;
     }
+    if (current.mode === 'native') { fallBackToMp4(current.file); return; }
     videoError = true;
     renderLobby();
     if (joined) notice('blocked', 'Этот файл не открывается в браузере. Нужен mp4 (H.264 и AAC).');
@@ -785,6 +903,7 @@
       me = d.user;
       everyone = d.users && d.users.length ? d.users : [d.user];
       subsByFile = d.subs || {};
+      hlsByFile = d.hls || {};
       if (d.files.length > 1) {
         for (const sel of [$('files'), $('filesP')]) for (const f of d.files) sel.add(new Option(title(f), f));
         $('pick').hidden = false;

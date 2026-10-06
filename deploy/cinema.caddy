@@ -13,10 +13,14 @@ __DOMAIN__ {
 			header Content-Type application/json*
 			header Content-Type application/manifest+json*
 			header Content-Type image/svg+xml*
+			header Content-Type application/vnd.apple.mpegurl*
 		}
 	}
 	header {
 		Strict-Transport-Security "max-age=31536000"
+		# HTTP/3 для кинозала выключен: Safari на iPhone тянул по QUIC видео кусками по 64 КБ на 0,5–2 Мбит/с,
+		# а по HTTP/2 те же телефоны качали в десятки раз быстрее. "clear" велит забыть уже запомненный h3.
+		Alt-Svc "clear"
 		-Server
 	}
 	reverse_proxy 127.0.0.1:3000 {
