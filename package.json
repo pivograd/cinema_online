@@ -1,0 +1,13 @@
+{
+  "name": "cinema-online",
+  "version": "1.0.0",
+  "description": "Совместный просмотр фильма для двоих",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node scripts/e2e.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" },
+  "devDependencies": { "playwright-core": "^1.48.0" }
+}

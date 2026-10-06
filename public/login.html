@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кинотеатр — вход</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="center">
+  <form class="card" method="post" action="/login">
+    <h1>🎬 Кинотеатр</h1>
+    <p id="err" class="error" hidden>Неверный логин или пароль</p>
+    <label>Логин <input name="user" autocomplete="username" autocapitalize="none" required autofocus></label>
+    <label>Пароль <input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Войти</button>
+  </form>
+  <script>if (location.search.includes('error')) document.getElementById('err').hidden = false;</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кинотеатр</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <span id="dot" class="dot"></span><span id="conn">подключение…</span>
+    <span id="who"></span>
+    <span class="spacer"></span>
+    <select id="files" hidden></select>
+    <a href="/logout">Выйти</a>
+  </header>
+  <div class="stage">
+    <video id="v" playsinline controls preload="auto"></video>
+    <div id="join" class="overlay">
+      <div>
+        <button id="joinBtn" disabled>Присоединиться к просмотру</button>
+        <p id="joinHint">Загрузка…</p>
+      </div>
+    </div>
+  </div>
+  <footer id="status"></footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
