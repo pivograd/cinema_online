@@ -102,6 +102,17 @@ put /etc/caddy/main.Caddyfile 644 <<'EOF' && changed=1
 # Точка входа Caddy на этом сервере (systemd: /etc/systemd/system/caddy.service.d/sites.conf; ставит
 # deploy/install.sh кинозала). /etc/caddy/Caddyfile подключается как есть — его ведёт свой проект;
 # каждый дополнительный сайт лежит отдельным файлом в /etc/caddy/sites/.
+#
+# HTTP/3 выключен для всего сервера: на маршруте от этого хостинга QUIC теряет пакеты, и Safari тянул видео
+# кусками по 64 КБ с обрывами (69% запросов), а по HTTP/2 те же телефоны качают в десятки раз быстрее.
+# Глобальные опции обязаны идти первыми: если в /etc/caddy/Caddyfile появится свой глобальный блок
+# (например, email у mbkas), его содержимое нужно перенести сюда, иначе Caddy не примет конфиг.
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
 import /etc/caddy/Caddyfile
 import /etc/caddy/sites/*.caddy
 EOF
